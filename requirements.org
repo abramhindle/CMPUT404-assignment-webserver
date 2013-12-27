@@ -1,0 +1,31 @@
+* Build a webserver!
+** Description
+
+   Your task is to build a partially HTTP 1.1 compliant
+   webserver. Your webserver will serve static content from the www
+   directory in the same directory that you start the webserver in.
+
+** User Stories
+   - As a user I want to view files in ./www via a webbrowser
+   - As a user I want to view files in ./www via curl
+   - As a webserver admin I want to serve HTML and CSS files from ./www
+   - As a webserver admin I want ONLY files in ./www and deeper to be
+     served.
+
+** Requirements
+   - [ ] The webserver can serve files from ./www
+   - [ ] The webserver can be run using the runner.sh file
+   - [ ] The webserver can pass all the tests in freetests.py
+   - [ ] The webserver can pass all the tests in not-free-tests.py
+     (you don't have this one!)
+   - [ ] The webserver supports mime-types for HTML
+   - [ ] The webserver supports mime-types for CSS
+   - [ ] The webserver can return index.html from directories (paths
+     that end in /)
+   - [ ] The webserver can server 404 errors for paths not found
+   - [ ] The webserver works with Firefox and Chromium
+     http://127.0.0.1:8080/
+   - [ ] The webserver can serve CSS properly so that the front page
+     has an orange h1 header.
+   - [ ] I can check out the source code via git URL
+
