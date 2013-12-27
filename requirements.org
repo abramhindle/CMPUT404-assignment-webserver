@@ -5,6 +5,14 @@
    webserver. Your webserver will serve static content from the www
    directory in the same directory that you start the webserver in.
 
+   You are meant to understand the very basics of HTTP by having a
+   hands-on ground up understanding of what it takes to have an HTTP
+   connection.
+
+** Collaboration
+   - You may consult with others but the submission should be your
+     own source code.
+
 ** User Stories
    - As a user I want to view files in ./www via a webbrowser
    - As a user I want to view files in ./www via curl
@@ -27,5 +35,23 @@
      http://127.0.0.1:8080/
    - [ ] The webserver can serve CSS properly so that the front page
      has an orange h1 header.
-   - [ ] I can check out the source code via git URL
+   - [ ] I can check out the source code via an HTTP git URL
+   - [ ] Provide a screenshot (commit and push it!) of Firefox at
+     http://127.0.0.1:8080/ and http://127.0.0.1:8080/deep
 
+** Restrictions
+   - [ ] Use Python 2.7
+   - [ ] Must run in the undergrad lab (Ubuntu 12.04)
+   - [ ] License your webserver properly (use an OSI approved license)
+     - Put your name on it!
+   - [ ] You cannot use a Web Server library
+
+** Recommendations
+   - Use the server.py skeleton. Handling sockets yourself is not
+     that fun
+   - Keep it short, keep it modular
+
+** Marking
+   - 4 Marks for passing all of freetests.py
+   - 2 Marks for passing all of not-free-tests.py
+   - 1 Mark Firefox screenshots

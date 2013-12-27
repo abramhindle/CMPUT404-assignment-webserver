@@ -13,6 +13,12 @@ import SocketServer
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+# Furthermore it is derived from the Python documentation examples thus
+# some of the code is Copyright © 2001-2013 Python Software
+# Foundation; All Rights Reserved
+#
+# http://docs.python.org/2/library/socketserver.html
+#
 # run: python freetests.py
 
 # try: curl -v -X GET http://127.0.0.1:8080/
