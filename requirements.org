@@ -12,6 +12,11 @@
 ** Collaboration
    - You may consult with others but the submission should be your
      own source code.
+   - You may work (pair program) with 1 other person, but both of you
+     need to submit your work separately.
+   - Collaboration but be documents in the README.md file
+   - Any external source code must be referenced and documented in
+     the README.md file
 
 ** User Stories
    - As a user I want to view files in ./www via a webbrowser
@@ -51,6 +56,23 @@
      that fun
    - Keep it short, keep it modular
 
+** Submission Instructions
+   - Fork my repository from github
+     https://github.com/abramhindle/CMPUT404-assignment-webserver
+   - Push your commits to your fork
+   - In EClass for this assignment submit a URL to the git
+     repository. I would prefer github for the host.
+     - Line 1: the git URL
+     - Line 2: Your CCID
+     - Line 3: Your collaborator's CCID
+
+   - To mark your assignment I should be able to type:
+     git clone http://github.com/youruserid/thisassignment.git yourccid
+     cd yourccid
+     bash runner.sh
+   - Marks will be deducted if I cannot successfully do this.
+     
+   
 ** Marking
    - 4 Marks for passing all of freetests.py
    - 2 Marks for passing all of not-free-tests.py
