@@ -38,7 +38,7 @@ if __name__ == "__main__":
     HOST, PORT = "localhost", 8080
 
     SocketServer.TCPServer.allow_reuse_address = True
-    # Create the server, binding to localhost on port 9999
+    # Create the server, binding to localhost on port 8080
     server = SocketServer.TCPServer((HOST, PORT), MyWebServer)
 
     # Activate the server; this will keep running until you
