@@ -14,7 +14,7 @@
      own source code.
    - You may work (pair program) with 1 other person, but both of you
      need to submit your work separately.
-   - Collaboration but be documents in the README.md file
+   - Collaboration must be documented in the README.md file
    - Any external source code must be referenced and documented in
      the README.md file
 
