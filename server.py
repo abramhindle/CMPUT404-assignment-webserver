@@ -1,5 +1,5 @@
+#  coding: utf-8 
 import SocketServer
-# coding: utf-8
 
 # Copyright 2013 Abram Hindle, Eddie Antonio Santos
 # 
