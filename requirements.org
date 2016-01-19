@@ -30,7 +30,7 @@
    - [ ] The webserver can be run using the runner.sh file
    - [ ] The webserver can pass all the tests in freetests.py
    - [ ] The webserver can pass all the tests in not-free-tests.py
-     (you don't have this one!)
+     (you only have part of this one, I reserve the right to add tests)
    - [ ] The webserver supports mime-types for HTML
    - [ ] The webserver supports mime-types for CSS
    - [ ] The webserver can return index.html from directories (paths
