@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# run: python freetests.py
+# run: python not-free-tests.py
 
 import urllib2
 import unittest
