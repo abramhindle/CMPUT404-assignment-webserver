@@ -12,8 +12,6 @@
 ** Collaboration
    - You may consult with others but the submission should be your
      own source code.
-   - You may work (pair program) with 1 other person, but both of you
-     need to submit your work separately.
    - Collaboration must be documented in the README.md file
    - Any external source code must be referenced and documented in
      the README.md file
