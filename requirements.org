@@ -44,7 +44,7 @@
    - [ ] Return a status code of "405 Method Not Allowed" for any method you cannot handle (POST/PUT/DELETE) 
 
 ** Restrictions
-   - [ ] Use Python 2.7
+   - [ ] Use Python3
    - [ ] Must run in the undergrad lab (Ubuntu 12.04)
    - [ ] License your webserver properly (use an OSI approved license)
      - Put your name on it!
