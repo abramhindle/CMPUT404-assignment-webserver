@@ -65,10 +65,13 @@
      - Line 2: Your CCID
      - Line 3: Your collaborator's CCID
 
-   - To mark your assignment I should be able to type:
-     git clone http://github.com/youruserid/thisassignment.git yourccid
-     cd yourccid
-     bash runner.sh
+   - To mark your assignment I should be able to type:     
+    #+BEGIN_SRC bash
+        git clone http://github.com/youruserid/thisassignment.git yourccid
+        cd yourccid
+        bash runner.sh
+    #+END_SRC
+
    - Marks will be deducted if I cannot successfully do this.
      
    
