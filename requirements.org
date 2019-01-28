@@ -39,8 +39,8 @@
    - [ ] The webserver can serve CSS properly so that the front page
      has an orange h1 header.
    - [ ] I can check out the source code via an HTTP git URL
-   - [ ] Provide a screenshot (commit and push it!) of Firefox at
-     http://127.0.0.1:8080/ and http://127.0.0.1:8080/deep/
+   - [ ] Provide 1 screenshot (commit and push it!) of Firefox at http://127.0.0.1:8080/ as ./root.png in the root of the repo
+   - [ ] Provide 1 screenshot (commit and push it!) of Firefox at http://127.0.0.1:8080/deep/ as ./deep.png in the root of the repo
    - [ ] Return a status code of "405 Method Not Allowed" for any method you cannot handle (POST/PUT/DELETE) 
    - [ ] Must use 301 to correct paths such as http://127.0.0.1:8080/deep/ to http://127.0.0.1:8080/deep
 
@@ -50,6 +50,7 @@
    - [ ] License your webserver properly (use an OSI approved license)
      - Put your name or some identifier (not your student number) on it!
    - [ ] You cannot use a Web Server library
+   - [ ] Screenshots must be named deep.png and root.png in the root of the repository
 
 ** Recommendations
    - Use the server.py skeleton. Handling sockets yourself is not
@@ -65,7 +66,13 @@
      - Line 1: the git URL
      - Line 2: Your CCID
      - Line 3: Your collaborator's CCID
-
+   - An example submission looks like this
+    #+BEGIN_SRC bash
+        https://github.com/youruserid/thisassignment.git 
+        yourccid
+        yourbuddy1, yourbuddy2
+    #+END_SRC
+   - collaborators must follow the collaboration policy guideline for this assignment.
    - To mark your assignment I should be able to type:     
     #+BEGIN_SRC bash
         git clone http://github.com/youruserid/thisassignment.git yourccid
