@@ -42,12 +42,13 @@
    - [ ] Provide a screenshot (commit and push it!) of Firefox at
      http://127.0.0.1:8080/ and http://127.0.0.1:8080/deep/
    - [ ] Return a status code of "405 Method Not Allowed" for any method you cannot handle (POST/PUT/DELETE) 
+   - [ ] Must use 301 to correct paths such as http://127.0.0.1:8080/deep/ to http://127.0.0.1:8080/deep
 
 ** Restrictions
    - [ ] Use Python3
-   - [ ] Must run in the undergrad lab (Ubuntu 12.04)
+   - [ ] Must run in the 404 VM lab (Ubuntu 18.10)
    - [ ] License your webserver properly (use an OSI approved license)
-     - Put your name on it!
+     - Put your name or some identifier (not your student number) on it!
    - [ ] You cannot use a Web Server library
 
 ** Recommendations
