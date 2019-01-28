@@ -46,7 +46,7 @@
 
 ** Restrictions
    - [ ] Use Python3
-   - [ ] Must run in the 404 VM lab (Ubuntu 18.10)
+   - [ ] Must run in the 404 VM (Ubuntu 18.10)
    - [ ] License your webserver properly (use an OSI approved license)
      - Put your name or some identifier (not your student number) on it!
    - [ ] You cannot use a Web Server library
