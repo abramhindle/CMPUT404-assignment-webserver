@@ -61,7 +61,7 @@ class TestYourWebserver(unittest.TestCase):
         except request.HTTPError as e:
             self.assertTrue( e.getcode()  == 404 , ("404 Not FOUND! %d" % e.getcode()))
         else:
-            self.assertTrue( false, "Another Error was thrown!")
+            self.assertTrue( False, "Another Error was thrown!")
 
     def test_css(self):
         url = self.baseurl + "/base.css"
