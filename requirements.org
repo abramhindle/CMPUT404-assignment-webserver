@@ -42,7 +42,7 @@
    - [ ] Provide 1 screenshot (commit and push it!) of Firefox at http://127.0.0.1:8080/ as ./root.png in the root of the repo
    - [ ] Provide 1 screenshot (commit and push it!) of Firefox at http://127.0.0.1:8080/deep/ as ./deep.png in the root of the repo
    - [ ] Return a status code of "405 Method Not Allowed" for any method you cannot handle (POST/PUT/DELETE) 
-   - [ ] Must use 301 to correct paths such as http://127.0.0.1:8080/deep/ to http://127.0.0.1:8080/deep
+   - [ ] Must use 301 to correct paths such as http://127.0.0.1:8080/deep to http://127.0.0.1:8080/deep/ (path ending)
 
 ** Restrictions
    - [ ] Use Python3
