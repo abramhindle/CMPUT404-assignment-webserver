@@ -41,8 +41,6 @@ class MyWebServer(socketserver.BaseRequestHandler):
         http_response = self.check_405(check_status)
         if not http_response:
             http_response = self.check_404(check_status)
-            if not http_response:
-                http_response="working"
         self.request.sendall(bytearray(http_response,'utf-8')) # serving the response to the server
 
     def check_405(self, request):
@@ -58,58 +56,39 @@ class MyWebServer(socketserver.BaseRequestHandler):
         # https://stackoverflow.com/questions/36142188/search-a-directory-including-all-subdirectories-that-may-or-may-not-exist-for
         parent = os.path.abspath("www")
         path_given = request[1]
+        newpath = parent + path_given
 
-        print(f"parent: {parent}")
-        print(f"path: {path_given}")
-        print(request[:2])
+        if parent not in os.path.abspath(newpath):
+            page = self.return_error_html("404 Page Not Found")
+            return self.return_HTTP("404 Page Not Found", page)
 
-        if os.path.exists(parent + path_given):
+
+        if os.path.exists(newpath):
+            if os.path.isdir(newpath):
+                if path_given[-1] != "/":
+                    page = self.return_error_html(f"301 Moved Permanently\r\nLocation: localhost:8000/{path_given}/")
+                    return self.return_HTTP(f"301 Moved Permanently\r\nLocation: {path_given}/", page)
             if path_given[-1] == "/":
                 if "html" not in path_given:
-                    newpath = parent + path_given + "index.html"
-                else:
-                    newpath = parent + path_given[:-1]
-            else:
-                newpath = parent + path_given
-
-            print(newpath)
+                    newpath += "index.html"
+                    
             fetch_page = open(newpath, "r")
             read_page = fetch_page.read()
             fetch_page.close()
 
-            if "html" in newpath:
-                mimetype = "text/html"
-            elif "css" in newpath:
+            mimetype = "text/html"
+            if "css" in newpath:
                 mimetype = "text/css"
             return """HTTP/1.1 {}\r\nAllow: GET\r\nContent-Type: {}\r\nConnection: close\r\n\r\n{}""".format("200 OK",mimetype,read_page)
+        else:
+            page = self.return_error_html("404 Page Not Found")
+            return self.return_HTTP("404 Page Not Found", page)
         return False
 
 
-
-        #
-        # for (dir,subdirs,files) in os.walk('www'):
-        #     if given_path[1:] in subdirs:
-        #         if given_path[-1] != "/":
-        #             page = self.return_error_html(f"301 Moved Permanently\r\nLocation: {given_path}/\r\n")
-        #             return self.return_HTTP(f"301 Moved Permanently\r\nLocation: http://localhost:8000{given_path}/\r\n",page)
-        #
-        #     if given_path[1:] in files:
-        #         print(os.path.abspath(given_path))
-        #         url = os.path.join('www',given_path)
-        #         if "html" in given_path:
-        #             mimetype = "text/html"
-        #         elif "css" in given_path:
-        #              mimetype = "text/css"
-        #         fetch_page = open(url, "r")
-        #         read_page = fetch_page.read()
-        #         fetch_page.close()
-        #         return """HTTP/1.1 {}\r\nAllow: GET\r\nContent-Type: {}\r\nConnection: close\r\n\r\n{}""".format("200 OK",mimetype,read_page)
-        #
-
     def check_301(self, request):
         pass
-    def check_200(self, request):
-        pass
+
 
     def return_HTTP(self, status_code, page):
         http = """HTTP/1.1 {}\r\nAllow: GET\r\nContent-Type: text/html\r\nConnection: close\r\n\r\n{}""".format(status_code,page)
