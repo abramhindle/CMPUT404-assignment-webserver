@@ -87,7 +87,7 @@ class TestYourWebserver(unittest.TestCase):
             req = request.urlopen(url, None, 3)
             code = req.getcode() 
             if code >= 200 and code <= 299 and req.geturl() == expected_url:
-                 self.assertTrue(True, "The library has redirected for us")
+                self.assertTrue(True, "The library has redirected for us")
             else:
                 self.assertTrue(False, "The URL hasn't changed %s %s" % (code,req.geturl()))
         except request.HTTPError as e:
