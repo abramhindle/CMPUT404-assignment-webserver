@@ -1,14 +1,14 @@
-#  coding: utf-8 
+#  coding: utf-8
 import socketserver
 
 # Copyright 2013 Abram Hindle, Eddie Antonio Santos
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,11 +28,75 @@ import socketserver
 
 
 class MyWebServer(socketserver.BaseRequestHandler):
-    
+
     def handle(self):
         self.data = self.request.recv(1024).strip()
         print ("Got a request of: %s\n" % self.data)
-        self.request.sendall(bytearray("OK",'utf-8'))
+        self.redirect = False
+        self.process_data()
+        if self.action != b'GET':
+            self.response((self.statu_codes("405") +"\n"))
+            return
+
+        if self.directory:
+            try:
+                result = self.open_file(self.directory)
+                temp = self.directory.split('.')
+                content_type = "Content-Type: text/%s;\r\n"%temp[1]
+                if self.redirect:
+                    self.response((self.statu_codes("301") + content_type +"\n"+ result))
+                else:
+                    self.response((self.statu_codes("200") + content_type +"\n"+ result))
+
+            except Exception as e:
+                self.response((self.statu_codes("404") +"\n"))
+
+    def statu_codes(self,code):
+        codes = {
+                "200": "HTTP/1.1 200 OK\r\n",
+                "301": "HTTP/1.1 301 Moved Permanently\r\n:",
+                "404": "HTTP/1.1 404 Not Found\r\n",
+                "405": "HTTP/1.1 405 Method Not Allowed\r\n"
+                }
+        return codes[code]
+
+    def process_data(self):
+        requirements = self.data.split(b'\r\n')
+        self.find_directory(requirements[0])
+        self.info_dict = {}
+        for item in requirements:
+            try:
+                temp = item.split(b':')
+                self.info_dict[temp[0]] = temp[1]
+            except Exception:
+                pass
+
+    def find_directory(self, value):
+        try:
+            temp = value.split(b' ')
+            self.action = temp[0]
+            self.directory = temp[1].decode("utf-8")
+            if self.directory[-1] == '/' and "." not in self.directory:
+                self.directory += "index.html"
+            if self.directory[-1] != '/' and "." not in self.directory:
+                self.redirect = True
+                self.directory += "/index.html"
+
+            self.directory = self.directory[1:]
+        except Exception as e:
+            pass
+
+    def open_file(self, filename):
+        filename = "./www/" + filename
+        f = open(filename, "r")
+        return f.read()
+
+    def response(self, value):
+        self.request.sendall(bytearray(value,'utf-8'))
+
+
+
+
 
 if __name__ == "__main__":
     HOST, PORT = "localhost", 8080
