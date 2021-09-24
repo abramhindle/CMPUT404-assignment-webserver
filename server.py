@@ -49,16 +49,19 @@ class MyWebServer(socketserver.BaseRequestHandler):
                     self.response((self.statu_codes("200") + content_type +"\n"+ result))
 
             except Exception as e:
+                #raise HTTPError(404, self.statu_codes("404"))
+
+                #raise HTTPError(self.statu_codes("404"))
                 self.response((self.statu_codes("404") +"\n"))
 
     def statu_codes(self,code):
         codes = {
-                "200": "HTTP/1.1 200 OK\r\n",
-                "301": "HTTP/1.1 301 Moved Permanently\r\n:",
-                "404": "HTTP/1.1 404 Not Found\r\n",
-                "405": "HTTP/1.1 405 Method Not Allowed\r\n"
+                "200": " 200 OK\r\n",
+                "301": " 301 Moved Permanently\r\n:",
+                "404": " 404 Not Found\r\n",
+                "405": " 405 Method Not Allowed\r\n"
                 }
-        return codes[code]
+        return self.http_version + codes[code]
 
     def process_data(self):
         requirements = self.data.split(b'\r\n')
@@ -76,12 +79,13 @@ class MyWebServer(socketserver.BaseRequestHandler):
             temp = value.split(b' ')
             self.action = temp[0]
             self.directory = temp[1].decode("utf-8")
-            if self.directory[-1] == '/' and "." not in self.directory:
+            self.http_version = temp[2].decode("utf-8")
+            dir_temp = self.directory.split('/')
+            if self.directory[-1] == '/' and "." not in dir_temp[-1]:
                 self.directory += "index.html"
-            if self.directory[-1] != '/' and "." not in self.directory:
+            elif self.directory[-1] != '/' and "." not in dir_temp[-1]:
                 self.redirect = True
                 self.directory += "/index.html"
-
             self.directory = self.directory[1:]
         except Exception as e:
             pass
