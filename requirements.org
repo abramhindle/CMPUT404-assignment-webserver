@@ -66,7 +66,7 @@
      - Line 1: the git URL
      - Line 2: Your CCID
      - Line 3: Your collaborator's CCID
-   - An example submission looks like this
+   - An example submission looks like this (must be a https link)
     #+BEGIN_SRC bash
         https://github.com/youruserid/thisassignment.git 
         yourccid
@@ -84,6 +84,8 @@
      
    
 ** Marking
-   - 4 Marks for passing all of freetests.py
-   - 2 Marks for passing all of not-free-tests.py
-   - 1 Mark Firefox screenshots
+   - Excellent 7/7: All tests pass (free and notfree), Firefox screenshots included in proper locations. Test runner execut
+   - Good 6/7: All tests pass (free and notfree), Firefox screenshots not in proper location
+   - Satisfactory 5/7: All tests pass (free and notfree), No firefox screenshots
+   - Unsatisfactory 4/7: All tests pass except extra notfree tests that are not included in this repo. OR an excellent assignment that didn't follow the requirements in any way.
+   - Failure 0/7: Any free or notfree tests fail
