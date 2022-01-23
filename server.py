@@ -1,5 +1,7 @@
 #  coding: utf-8 
 import socketserver
+import os 
+import codecs 
 
 # Copyright 2013 Abram Hindle, Eddie Antonio Santos
 # 
@@ -28,11 +30,32 @@ import socketserver
 
 
 class MyWebServer(socketserver.BaseRequestHandler):
+
+    
     
     def handle(self):
-        self.data = self.request.recv(1024).strip()
-        print ("Got a request of: %s\n" % self.data)
-        self.request.sendall(bytearray("OK",'utf-8'))
+        print("Starting server connection...")
+        self.directory = 'www/'
+
+        index_text = self.do_GET()
+        # index_text = ''
+
+        self.request.sendall(bytearray(f'200 OK\n{index_text}', 'utf-8'))
+
+    def do_GET(self):
+        for file in os.listdir(self.directory):
+            if file == 'index.html':
+                path = self.directory + file
+                with open(path, 'r', encoding='utf-8') as f:
+                    text = f.read()
+                    return text 
+    
+
+    def handle_error(self):
+        self.request.sendall(bytearray("404 Not Found", 'utf-8'))
+
+
+    
 
 if __name__ == "__main__":
     HOST, PORT = "localhost", 8080
