@@ -1,7 +1,7 @@
 #  coding: utf-8 
 import socketserver
 import os 
-import codecs 
+from datetime import datetime
 
 # Copyright 2013 Abram Hindle, Eddie Antonio Santos
 # 
@@ -30,25 +30,36 @@ import codecs
 
 
 class MyWebServer(socketserver.BaseRequestHandler):
-
-    
     
     def handle(self):
         print("Starting server connection...")
         self.directory = 'www/'
 
-        index_text = self.do_GET()
-        # index_text = ''
+        get_res = self.do_GET()
 
-        self.request.sendall(bytearray(f'200 OK\n{index_text}', 'utf-8'))
+        self.request.sendall(bytearray(f'{get_res}', 'utf-8'))
+    
+    def get_date(self):
+        return datetime.now().strftime('%a, %d %b %Y %H:%M:%S')
 
     def do_GET(self):
+        status = 'HTTP/1.1 200 OK\r\n'
+        date = 'Date:' + self.get_date() + '\r\n'
+        content_type = 'Content-Type: text/html\r\n'
+
+        body = ''
+
         for file in os.listdir(self.directory):
             if file == 'index.html':
                 path = self.directory + file
                 with open(path, 'r', encoding='utf-8') as f:
-                    text = f.read()
-                    return text 
+                    body = f.read()
+
+        content_len = 'Content-Length:' + str(len(body)) + '\r\n'            
+        
+        response = status + date + content_type + content_len + body
+
+        return response
     
 
     def handle_error(self):
