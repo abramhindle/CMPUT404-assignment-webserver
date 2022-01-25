@@ -1,4 +1,5 @@
 #  coding: utf-8 
+from base64 import urlsafe_b64encode
 import socketserver
 import os 
 from datetime import datetime
@@ -42,21 +43,30 @@ class MyWebServer(socketserver.BaseRequestHandler):
         '''
         print("Starting server connection...")
 
-        self.get_paths()
-
         # self.request is the TCP socket connected to the client
         received = self.request.recv(1024).strip()
 
+        # parse the request
+        method, url = self.parse_request(received.decode('utf-8'))
+
         response = None
         try:
-            # Parse the request from the client
-            content_type, data = self.parse_request(received.decode('utf-8'))
-            
-            if content_type and data:
-                response = self.do_GET(200, content_type, data)
+
+            # Handle GET request
+            if method == 'GET':
+                print('Handling GET request...')
+                success, content_type, data = self.handle_GET(url)
+
+                if success:
+                    response = self.do_GET(200, content_type, data)
                 
+                else:
+                    print('Failed to GET body.')
+                    raise Exception
             else:
-                raise Exception
+                # TODO: send response for other methods ()
+                print('Method not supported.')
+                pass
             
         except Exception as e:
             print('[ERROR]', e)
@@ -69,30 +79,83 @@ class MyWebServer(socketserver.BaseRequestHandler):
 
             print("Finished processing request.\n", '='*50)
     
+    # def old_parse_request(self, req):
+    #     start, headers = req.split('\r\n', 1)
+    #     method, url, protocol = start.split(' ')
+
+    #     # Handle GET request
+    #     if method == 'GET':
+    #         try:
+    #             # Get home index page
+    #             #FIXME: test_get_root and test_get_indexhtml failing
+    #             if url == '/' or url == '/index.html':
+    #                 return 'text/html', self.read_file_from_dir('/index.html')
+
+    #             # Use regex to get any .css file 
+    #             css_regexpr = re.search('.\.css$', url)
+    #             if css_regexpr is not None:
+    #                 return 'text/css', self.read_file_from_dir(url)
+            
+    #         except Exception as e:
+    #             print('[ERROR]', e)
+    #             self.handle_error()
+
+    #     else:
+    #         self.handle_error()
+    
     def parse_request(self, req):
+        '''
+            Parses the request from the client and returns the method and url 
+
+            Returns:
+                method: the method of the request (GET, POST, etc.)
+                url: the url of the request to serve
+        '''
+
         start, headers = req.split('\r\n', 1)
         method, url, protocol = start.split(' ')
 
+        return method, url
+
+    def handle_GET(self, req_url):
+        '''
+            Takes the URL from the request header and sets the content-type and body
+
+            Returns:
+                success:    True if the request was successful, False otherwise
+                content_type:   the content type of the response (text/html, text/css, etc.)
+                body:   the body of the response
+
+        '''
         
-        # Handle GET request
-        if method == 'GET':
-            try:
-                # Get home index page
-                #FIXME: test_get_root and test_get_indexhtml failing
-                if url == '/' or url == '/index.html':
-                    return 'text/html', self.read_file_from_dir('/index.html')
+        paths = self.get_paths()
 
-                # Use regex to get any .css file 
-                css_regexpr = re.search('.\.css$', url)
-                if css_regexpr is not None:
-                    return 'text/css', self.read_file_from_dir(url)
-            
-            except Exception as e:
-                print('[ERROR]', e)
-                self.handle_error()
+        for url in paths.keys():
+            if req_url == url:
+                file_content = self.read_file_from_dir(paths[url])
+                content_type = self.get_content_type(paths[url])
 
+                print('Content-Type:', content_type)
+                print('File Content:', file_content)
+
+                if file_content and content_type:
+                    return (1, content_type, file_content)
+
+
+        return (0, None, None)
+
+    def get_content_type(self, filepath):
+        '''
+            Returns the content type of the filepath
+        '''
+        if filepath.endswith('.html'):
+            return 'text/html'
+        elif filepath.endswith('.css'):
+            return 'text/css'
         else:
-            self.handle_error()
+            return None
+
+
         
     def get_paths(self):
         '''
@@ -111,8 +174,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
         # iterate through each file in www directory
         with os.scandir(root) as entries:
             for entry in entries:
-                print("File:", entry)
-                filepath = root  # path
+                filepath = root  # start with the root path
                 url = '/' # build url 
 
                 # check if is a file or a directory
@@ -122,36 +184,31 @@ class MyWebServer(socketserver.BaseRequestHandler):
                     filepath += entry.name
                     url += entry.name
 
-                    try:
-                        paths[filepath].add(url)
-                    except KeyError:
-                        paths[filepath] = set()
-                        paths[filepath].add(url)
+                    # add to paths dictionary
+                    paths[url] = filepath
 
                     # Special case to include '/' urls for index.html   
                     if entry.name == 'index.html':
-                        paths[filepath].add('/')
+                        paths['/'] = filepath
                 
+                # otherwise it is a directory
                 else:
+                    # iterate through each file in the nested directory 
                     with os.scandir(entry) as nested_entries:
                         for nested_entry in nested_entries:
+                            # create their corresponding paths and urls
                             filepath = root + entry.name + '/' + nested_entry.name
                             url = '/' + entry.name + '/' + nested_entry.name
 
-                            try:
-                                paths[filepath].add(url)
-                            except KeyError:
-                                paths[filepath] = set()
-                                paths[filepath].add(url)
+                            # add to paths dictionary
+                            paths[url] = filepath
 
+                            # Special case to include '/' urls for index.html       
                             if nested_entry.name == 'index.html':
-                                paths[filepath].add(f'/{entry.name}/')
+                                paths['/' + entry.name + '/'] = filepath
 
-
-                
-        for key, value in paths.items():
-            print(f'{key} : {value}')
-        
+        # for key, value in paths.items():
+        #     print(f'{key}: {value}')
 
         return paths
             
@@ -163,21 +220,15 @@ class MyWebServer(socketserver.BaseRequestHandler):
         return datetime.now().strftime('%a, %d %b %Y %H:%M:%S')
 
 
-    def read_file_from_dir(self, url):
+    def read_file_from_dir(self, filepath):
         '''
             Reads the files from the directory
         '''
-        directory = 'www'
-        
-        filename = url[1:]
 
-        for file in os.listdir(directory):
-            if file == filename:
-                path = directory + url
-                with open(path, 'r', encoding='utf-8') as f:
-                    body = f.read()
+        with open(filepath, 'r', encoding='utf-8') as f:
+            body = f.read()
 
-                    return body
+            return body
 
     def do_GET(self, status_code, content_type, body):
         '''
