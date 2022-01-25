@@ -5,6 +5,8 @@ from datetime import datetime
 import re
 import sys
 
+import requests
+
 # Copyright 2013 Abram Hindle, Eddie Antonio Santos
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,6 +42,8 @@ class MyWebServer(socketserver.BaseRequestHandler):
         '''
         print("Starting server connection...")
 
+        self.get_paths()
+
         # self.request is the TCP socket connected to the client
         received = self.request.recv(1024).strip()
 
@@ -61,26 +65,27 @@ class MyWebServer(socketserver.BaseRequestHandler):
         finally:
             if response:
                 self.request.sendall(bytearray(f'{response}', 'utf-8'))
-                print("Response:", response)
+                # print("Response:", response)
 
             print("Finished processing request.\n", '='*50)
     
     def parse_request(self, req):
         start, headers = req.split('\r\n', 1)
         method, url, protocol = start.split(' ')
+
         
         # Handle GET request
         if method == 'GET':
             try:
                 # Get home index page
-                if url == '/':
+                #FIXME: test_get_root and test_get_indexhtml failing
+                if url == '/' or url == '/index.html':
                     return 'text/html', self.read_file_from_dir('/index.html')
 
                 # Use regex to get any .css file 
                 css_regexpr = re.search('.\.css$', url)
                 if css_regexpr is not None:
                     return 'text/css', self.read_file_from_dir(url)
-
             
             except Exception as e:
                 print('[ERROR]', e)
@@ -88,6 +93,67 @@ class MyWebServer(socketserver.BaseRequestHandler):
 
         else:
             self.handle_error()
+        
+    def get_paths(self):
+        '''
+            Create a dictionary of paths and their corresponding files. 
+            Currently only works for the root directory and 1 nested folder.
+
+            Returns
+                paths   (dict)   : Key is the filepath and the value is the URL
+        '''
+
+        # dictionary of {filepath: set(urls)}
+        paths = {}
+
+        root = 'www/'
+
+        # iterate through each file in www directory
+        with os.scandir(root) as entries:
+            for entry in entries:
+                print("File:", entry)
+                filepath = root  # path
+                url = '/' # build url 
+
+                # check if is a file or a directory
+                # if it is a file, make the url and the filepath
+                if entry.is_file():
+
+                    filepath += entry.name
+                    url += entry.name
+
+                    try:
+                        paths[filepath].add(url)
+                    except KeyError:
+                        paths[filepath] = set()
+                        paths[filepath].add(url)
+
+                    # Special case to include '/' urls for index.html   
+                    if entry.name == 'index.html':
+                        paths[filepath].add('/')
+                
+                else:
+                    with os.scandir(entry) as nested_entries:
+                        for nested_entry in nested_entries:
+                            filepath = root + entry.name + '/' + nested_entry.name
+                            url = '/' + entry.name + '/' + nested_entry.name
+
+                            try:
+                                paths[filepath].add(url)
+                            except KeyError:
+                                paths[filepath] = set()
+                                paths[filepath].add(url)
+
+                            if nested_entry.name == 'index.html':
+                                paths[filepath].add(f'/{entry.name}/')
+
+
+                
+        for key, value in paths.items():
+            print(f'{key} : {value}')
+        
+
+        return paths
             
 
     def get_date(self):
