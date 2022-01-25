@@ -48,7 +48,6 @@ class MyWebServer(socketserver.BaseRequestHandler):
             # Parse the request from the client
             content_type, data = self.parse_request(received.decode('utf-8'))
             
-
             if content_type and data:
                 response = self.do_GET(200, content_type, data)
                 
@@ -73,12 +72,15 @@ class MyWebServer(socketserver.BaseRequestHandler):
         # Handle GET request
         if method == 'GET':
             try:
+                # Get home index page
                 if url == '/':
                     return 'text/html', self.read_file_from_dir('/index.html')
 
+                # Use regex to get any .css file 
                 css_regexpr = re.search('.\.css$', url)
                 if css_regexpr is not None:
                     return 'text/css', self.read_file_from_dir(url)
+
             
             except Exception as e:
                 print('[ERROR]', e)
