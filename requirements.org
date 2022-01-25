@@ -24,19 +24,19 @@
      served.
 
 ** Requirements
-   - [ ] The webserver can serve files from ./www
+   - [x] The webserver can serve files from ./www
    - [ ] The webserver can be run using the runner.sh file
    - [ ] The webserver can pass all the tests in freetests.py
    - [ ] The webserver can pass all the tests in not-free-tests.py
      (you only have part of this one, I reserve the right to add tests)
    - [ ] The webserver supports mime-types for HTML
    - [ ] The webserver supports mime-types for CSS
-   - [ ] The webserver can return index.html from directories (paths
+   - [x] The webserver can return index.html from directories (paths
      that end in /)
-   - [ ] The webserver can server 404 errors for paths not found
-   - [ ] The webserver works with Firefox and Chromium
+   - [x] The webserver can server 404 errors for paths not found
+   - [x] The webserver works with Firefox and Chromium
      http://127.0.0.1:8080/
-   - [ ] The webserver can serve CSS properly so that the front page
+   - [x] The webserver can serve CSS properly so that the front page
      has an orange h1 header.
    - [ ] I can check out the source code via an HTTP git URL
    - [ ] Provide 1 screenshot (commit and push it!) of Firefox at http://127.0.0.1:8080/ as ./root.png in the root of the repo
@@ -45,7 +45,7 @@
    - [ ] Must use 301 to correct paths such as http://127.0.0.1:8080/deep to http://127.0.0.1:8080/deep/ (path ending)
 
 ** Restrictions
-   - [ ] Use Python3
+   - [x] Use Python3
    - [ ] Must run in the 404 VM (Ubuntu 18.10)
    - [ ] License your webserver properly (use an OSI approved license)
      - Put your name or some identifier (not your student number) on it!
