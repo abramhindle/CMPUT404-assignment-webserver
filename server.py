@@ -2,6 +2,8 @@
 import socketserver
 import os 
 from datetime import datetime
+import re
+import sys
 
 # Copyright 2013 Abram Hindle, Eddie Antonio Santos
 # 
@@ -36,77 +38,100 @@ class MyWebServer(socketserver.BaseRequestHandler):
             Main function for handling a single request
 
         '''
-
         print("Starting server connection...")
-        self.directory = 'www/'
 
-        # Handle get request 
+        # self.request is the TCP socket connected to the client
+        received = self.request.recv(1024).strip()
+
+        response = None
         try:
-            # Get index.html 
-            main_index = self.read_file_from_dir('index.html')
-
-            www_index = self.do_GET(200, 'text/html', main_index)
-
-            # Get base.css
-            # main_css = self.read_file_from_dir('base.css')
-            # # Get files in deep dir 
-            # deep_index = self.read_file_from_dir('deep/index.html')
-            # deep_css = self.read_file_from_dir('deep/base.css')
-
-            # # Send the responses 
+            # Parse the request from the client
+            content_type, data = self.parse_request(received.decode('utf-8'))
             
-            # # www_css = self.do_GET(200, 'text/css', main_css, 'Link: <www/base.css>;rel=stylesheet\r\n\r\n')
-            # # self.request.sendall(bytearray(f'{www_css}', 'utf-8'))
 
-            # www_deep_index = self.do_GET(200, 'text/html', deep_index)
-            # self.request.sendall(bytearray(f'{www_deep_index}', 'utf-8'))
-            # print('Sent deep/index.html')
-            # www_deep_css = self.do_GET(200, 'text/css', deep_css)
+            if content_type and data:
+                response = self.do_GET(200, content_type, data)
+                
+            else:
+                raise Exception
             
         except Exception as e:
             print('[ERROR]', e)
             self.handle_error()
-
+            
         finally:
-            # self.request.sendall(bytearray(f'{www_index}', 'utf-8'))
-            self.request.sendall(bytearray(f'{www_index}', 'utf-8'))
-            print('Sent index.html')
-            print("Closing server connection...")
+            if response:
+                self.request.sendall(bytearray(f'{response}', 'utf-8'))
+                print("Response:", response)
+
+            print("Finished processing request.\n", '='*50)
     
+    def parse_request(self, req):
+        start, headers = req.split('\r\n', 1)
+        method, url, protocol = start.split(' ')
+        
+        # Handle GET request
+        if method == 'GET':
+            try:
+                if url == '/':
+                    return 'text/html', self.read_file_from_dir('/index.html')
+
+                css_regexpr = re.search('.\.css$', url)
+                if css_regexpr is not None:
+                    return 'text/css', self.read_file_from_dir(url)
+            
+            except Exception as e:
+                print('[ERROR]', e)
+                self.handle_error()
+
+        else:
+            self.handle_error()
+            
+
     def get_date(self):
         '''
             Returns the current date and time
         '''
         return datetime.now().strftime('%a, %d %b %Y %H:%M:%S')
 
-    def read_file_from_dir(self, filename):
-        '''
-            Reads the html file 
-        '''
 
-        for file in os.listdir(self.directory):
+    def read_file_from_dir(self, url):
+        '''
+            Reads the files from the directory
+        '''
+        directory = 'www'
+        
+        filename = url[1:]
+
+        for file in os.listdir(directory):
             if file == filename:
-                path = self.directory + file
+                path = directory + url
                 with open(path, 'r', encoding='utf-8') as f:
                     body = f.read()
 
                     return body
 
-    def do_GET(self, status_code, content_type, body, other=None):
+    def do_GET(self, status_code, content_type, body):
+        '''
+            Returns the response to the client
+
+        '''
+
         status = f'HTTP/1.1 {status_code} OK\r\n'
         date = 'Date: ' + self.get_date() + '\r\n'
         content_type = 'Content-Type: ' + content_type + '\r\n'
         content_len = 'Content-Length: ' + str(len(body)) + '\r\n'     
 
-        if other:
-            return status + date + content_type + content_len + other + body
+        header = status + date + content_type + content_len + '\r\n'
         
-        return status + date + content_type + content_len + body
+        
+        return header + body
 
 
     def handle_error(self):
-        response = 'HTTP/1.1 404 Not Found\r\n'
+        response = 'HTTP/1.1 404 Not Found\r\n\r\n'
         self.request.sendall(bytearray(response, 'utf-8'))
+        sys.exit()
 
 
     #TODO: close connection if you don't want to keep reading requests
