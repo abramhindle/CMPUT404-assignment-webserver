@@ -52,9 +52,9 @@ class MyWebServer(socketserver.BaseRequestHandler):
         status = main[2]
 
         parsed_info = {}
-        for val in request_info[1:]:
-            t = val.split(": ")
-            parsed_info[t[0]] = t[1]
+        # for val in request_info[1:]:
+        #     t = val.split(": ")
+        #     parsed_info[t[0]] = t[1]
 
         return method, uri, parsed_info
     
@@ -79,7 +79,8 @@ class MyWebServer(socketserver.BaseRequestHandler):
         method, uri, parsed_info = self.handle_requests(request_info)
 
         if method == 'GET':
-            if uri == '/base.css':
+            if uri.endswith('.css'):
+            # if uri == '/base.css':
                 # read css file
                 css_obj = open(f"www{uri}", 'r')
                 bbody = css_obj.read().encode('utf-8')
@@ -105,20 +106,20 @@ class MyWebServer(socketserver.BaseRequestHandler):
                 }
 
                 self.send_response(self.request, bbody, OK_STATUS_CODE, headers)                
-            elif uri == '/deep/deep.css':
-                # read css file
-                css_obj = open(f"www{uri}", 'r')
-                bbody = css_obj.read().encode('utf-8')
+            # elif uri == '/deep/deep.css':
+            #     # read css file
+            #     css_obj = open(f"www{uri}", 'r')
+            #     bbody = css_obj.read().encode('utf-8')
 
-                # generate headers
-                headers = {
-                    'Content-Type': 'text/css; charset=utf-8',
-                    'Content-Length': f'{len(bbody)}',
-                    'connection': 'close'
-                }
+            #     # generate headers
+            #     headers = {
+            #         'Content-Type': 'text/css; charset=utf-8',
+            #         'Content-Length': f'{len(bbody)}',
+            #         'connection': 'close'
+            #     }
 
-                # send message
-                self.send_response(self.request, bbody, OK_STATUS_CODE, headers)                
+            #     # send message
+            #     self.send_response(self.request, bbody, OK_STATUS_CODE, headers)                
             elif re.match(r"^/deep/?$", uri) is not None or re.match(r'^/deep/index.html/?$', uri) is not None:
                 if uri.endswith('/'):
                     # read html file
