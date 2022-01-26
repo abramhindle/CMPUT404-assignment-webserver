@@ -38,18 +38,38 @@ def isRequestValid(data):
 
 
 def is405(data):
-    return getRequestType(data) == "GET"
+    return getRequestType(data) != "GET"
 
 
 def is404(filePath):
     return os.path.exists(filePath)
 
 
+def getErrorResponse(code):
+
+    if code == "405":
+        errorMessage = "<p1> 405 - Method Not Allowed</p1>"
+        errorMessageLength = len(errorMessage.encode("utf-8"))
+        response = (
+            "HTTP/1.1 405 - Method Not Allowed\r\nAllow: GET\r\nContent-length:"
+            + str(errorMessageLength)
+            + "\r\nContent-Type: text/html\r\n\r\n"
+            + errorMessage
+        )
+        print(response)
+        return response
+
+
 class MyWebServer(socketserver.BaseRequestHandler):
     def handle(self):
         self.data = self.request.recv(1024).strip()
-        print(self.data.split())
-        self.request.sendall(bytearray("OK", "utf-8"))
+        self.data = self.data.split()
+        if not isRequestValid(self.data):
+            return
+        if is405(self.data):
+            errorMessage = getErrorResponse("405")
+            self.request.sendall(bytearray(errorMessage, "utf-8"))
+            return
 
 
 if __name__ == "__main__":
