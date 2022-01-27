@@ -252,6 +252,44 @@ class MyWebServer(socketserver.BaseRequestHandler):
         self.request.sendall(bytearray(response, 'utf-8'))
         sys.exit()
 
+    
+    def build_response(self, method, url):
+
+        # Handle GET request and get the correct status code 
+        if method == 'GET':
+            status_code = 200
+            # if url exists in paths, serve the file
+            if not url.endswith('/'):
+                corrected_url = self.url_exists(url + '/')
+                if corrected_url:
+                    status_code = 301 
+                    # TODO return a page with corrected url
+                else:
+                    status_code = 404
+                    # TODO return a page with 404 error
+            
+
+        # Send 405 response otherwise 
+        else:
+            status_code = 405
+
+        return 
+    
+    def status_info(self):
+        return 
+    
+    def build_header(self, status_code, content_type, body):
+        return 
+    
+    def url_exists(self, url):
+        '''
+            Checks if the url exists in the paths dictionary
+        '''
+        return url in self.paths.keys()
+
+    def send_response(self):
+        return 
+
 
     #TODO: close connection if you don't want to keep reading requests
     #TODO: store a dictionary of all paths if it exists in the directory
