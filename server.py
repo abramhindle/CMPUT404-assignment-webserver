@@ -73,35 +73,15 @@ class MyWebServer(socketserver.BaseRequestHandler):
             self.handle_error()
             
         finally:
+            
+            # refactored_response = self.build_response(method, url)
+
             if response:
                 self.request.sendall(bytearray(f'{response}', 'utf-8'))
                 # print("Response:", response)
 
             print("Finished processing request.\n", '='*50)
-    
-    # def old_parse_request(self, req):
-    #     start, headers = req.split('\r\n', 1)
-    #     method, url, protocol = start.split(' ')
 
-    #     # Handle GET request
-    #     if method == 'GET':
-    #         try:
-    #             # Get home index page
-    #             #FIXME: test_get_root and test_get_indexhtml failing
-    #             if url == '/' or url == '/index.html':
-    #                 return 'text/html', self.read_file_from_dir('/index.html')
-
-    #             # Use regex to get any .css file 
-    #             css_regexpr = re.search('.\.css$', url)
-    #             if css_regexpr is not None:
-    #                 return 'text/css', self.read_file_from_dir(url)
-            
-    #         except Exception as e:
-    #             print('[ERROR]', e)
-    #             self.handle_error()
-
-    #     else:
-    #         self.handle_error()
     
     def parse_request(self, req):
         '''
@@ -153,7 +133,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
         elif filepath.endswith('.css'):
             return 'text/css'
         else:
-            return None
+            return 'application/octet-stream'
 
 
         
@@ -253,39 +233,111 @@ class MyWebServer(socketserver.BaseRequestHandler):
         sys.exit()
 
     
-    def build_response(self, method, url):
+    def build_response(self, method, requested_url):
+        statuses = self.get_statuses()
+        paths = self.get_paths()
+        corrected_url = None
 
         # Handle GET request and get the correct status code 
         if method == 'GET':
             status_code = 200
             # if url exists in paths, serve the file
-            if not url.endswith('/'):
-                corrected_url = self.url_exists(url + '/')
+            if not requested_url.endswith('/'):
+                corrected_url = self.url_exists(requested_url + '/')
                 if corrected_url:
                     status_code = 301 
-                    # TODO return a page with corrected url
                 else:
-                    status_code = 404
-                    # TODO return a page with 404 error
-            
+                    status_code = 404           
 
         # Send 405 response otherwise 
         else:
             status_code = 405
 
-        return 
+        status_data = statuses[status_code]
+        # Build the header
+        header = self.build_header(status_code, requested_url)
+
+
+        body = ''
+        # Build the body 
+        if status_code == 200:
+            # read the file from the directory
+            for url in paths.keys():
+                if corrected_url == url:
+                    body = self.read_file_from_dir(paths[url])
+
+        else:
+            if status_code == 301:
+                body = self.get_html(status_data, corrected_url)
+            else:
+                body = self.get_html(status_data)
+
+        # Append content length to header
+        content_length = str(len(body))
+        header += f'Content-Length: {content_length}\r\n\r\n'
+
+        # Append the body to the header 
+        response = header + body
+
+        print('Response:', response)
+
+        return response
     
-    def status_info(self):
-        return 
+    def get_statuses(self):
+        status_dict = {
+            200: {
+                'message': 'OK',
+                'description': 'The request has succeeded'
+                },
+            404: {
+                'message': 'Not Found',
+                'description': 'The requested resource could not be found.'
+                },
+            301: {
+                'message':'Moved Permanently',
+                'description': 'The requested resource has been moved permanently'}
+        }
+        return status_dict
+
+    def get_html(self, status_data, new_url=None):
+
+        code = status_data.keys()[0]
+
+        anchor_elem = ''
+        if new_url:
+            anchor_elem = f'<a href="{new_url}">here</a>.'
+            
+        html_page = f'''
+        <!DOCTYPE html>
+        <html>
+        <head>
+        <title>{code} {status_data['message']}</title>
+        <meta http-equiv="Content-Type"
+        content="text/html;charset=utf-8"/>
+        </head>
+        <body>
+            <h1>{code} {status_data['message']}</h1>
+            {status_data['description']}
+            {anchor_elem}
+        </body>
+        </html> '''
+
+        return html_page
     
-    def build_header(self, status_code, content_type, body):
-        return 
+    def build_header(self, status_code, url):
+        header = f'''
+        HTTP/1.1 {status_code} {self.get_statuses()[status_code]['message']}\r\n
+        Date: {self.get_date()}\r\n
+        Content-Type: {self.get_content_type(url)}\r\n
+        '''
+
+        return header
     
     def url_exists(self, url):
         '''
             Checks if the url exists in the paths dictionary
         '''
-        return url in self.paths.keys()
+        return url in self.get_paths().keys()
 
     def send_response(self):
         return 
