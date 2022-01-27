@@ -1,13 +1,8 @@
 #  coding: utf-8 
-from base64 import urlsafe_b64encode
 import socketserver
 import os 
 from datetime import datetime
-import re
-import sys
-from urllib import request
 
-import requests
 
 # Copyright 2013 Abram Hindle, Eddie Antonio Santos
 # 
@@ -50,7 +45,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
         # parse the request
         method, url = self.parse_request(received.decode('utf-8'))
 
-
+        # Get a response 
         response = self.send_response(method, url)
 
         if response:
@@ -62,11 +57,14 @@ class MyWebServer(socketserver.BaseRequestHandler):
     
     def parse_request(self, req):
         '''
-            Parses the request from the client and returns the method and url 
+            Parses the request from the client and returns the method and url
+
+            Args:
+                req (str): the request from the client 
 
             Returns:
-                method: the method of the request (GET, POST, etc.)
-                url: the url of the request to serve
+                method (str): the method of the request (GET, POST, etc.)
+                url (str): the url of the request to serve
         '''
 
         start, headers = req.split('\r\n', 1)
@@ -74,33 +72,16 @@ class MyWebServer(socketserver.BaseRequestHandler):
 
         return method, url
 
-    def handle_GET(self, req_url):
-        '''
-            Takes the URL from the request header and sets the content-type and body
-
-            Returns:
-                success:    True if the request was successful, False otherwise
-                content_type:   the content type of the response (text/html, text/css, etc.)
-                body:   the body of the response
-
-        '''
-        
-        paths = self.get_paths()
-
-        for url in paths.keys():
-            if req_url == url:
-                file_content = self.read_file_from_dir(paths[url])
-                content_type = self.get_content_type(paths[url])
-
-                if file_content and content_type:
-                    return (1, content_type, file_content)
-
-
-        return (0, None, None)
 
     def get_content_type(self, filepath):
         '''
             Returns the content type of the filepath
+
+            Args:
+                filepath (str): the filepath of the file
+
+            Returns:
+                content_type (str): the content type, e.g. text/html
         '''
         if filepath.endswith('.html') or filepath.endswith('/'):
             return 'text/html'
@@ -161,9 +142,6 @@ class MyWebServer(socketserver.BaseRequestHandler):
                             if nested_entry.name == 'index.html':
                                 paths['/' + entry.name + '/'] = filepath
 
-        # for key, value in paths.items():
-        #     print(f'{key}: {value}')
-
         return paths
             
 
@@ -177,6 +155,9 @@ class MyWebServer(socketserver.BaseRequestHandler):
     def read_file_from_dir(self, filepath):
         '''
             Reads the files from the directory
+
+            Args:
+                filepath (str): the path of the file
         '''
 
         with open(filepath, 'r', encoding='utf-8') as f:
@@ -184,33 +165,13 @@ class MyWebServer(socketserver.BaseRequestHandler):
 
             return body
 
-    def do_GET(self, status_code, content_type, body):
-        '''
-            Returns the response to the client
-
-        '''
-
-        status = f'HTTP/1.1 {status_code} OK\r\n'
-        date = 'Date: ' + self.get_date() + '\r\n'
-        content_type = 'Content-Type: ' + content_type + '\r\n'
-        content_len = 'Content-Length: ' + str(len(body)) + '\r\n'     
-
-        header = status + date + content_type + content_len + '\r\n'
-        
-        
-        return header + body
-
-
-    def handle_error(self):
-        response = 'HTTP/1.1 404 Not Found\r\n\r\n'
-        self.request.sendall(bytearray(response, 'utf-8'))
-        sys.exit()
-
-    ####################################################################################
 
     def get_status_code(self, method, requested_url):
         '''
             Returns the status code for the request
+
+            Args:
+                method (str): the method of the request (GET, POST, etc.)
         '''
         
         # Handle GET request and get the correct status code 
@@ -252,7 +213,11 @@ class MyWebServer(socketserver.BaseRequestHandler):
                 },
             301: {
                 'message':'Moved Permanently',
-                'description': 'The requested resource has been moved permanently'}
+                'description': 'The requested resource has been moved permanently'},
+            405: {
+                'message': 'Method Not Allowed',
+                'description': 'The method specified in the Request-Line is not allowed for the resource identified by the Request-URI'
+            }
         }
         return status_dict
 
@@ -297,6 +262,11 @@ class MyWebServer(socketserver.BaseRequestHandler):
         return url in self.get_paths().keys()
 
     def get_body(self, status_code, requested_url):
+        '''
+            Returns the body of the response
+
+
+        '''
         
 
         # if code is 200, read the file 
@@ -315,8 +285,8 @@ class MyWebServer(socketserver.BaseRequestHandler):
             if status_code == 301: 
                 new_url = requested_url + '/'
                 file_content = self.get_html(301, status_data, new_url)
-            elif status_code == 404:
-                file_content = self.get_html(404, status_data)
+            else:
+                file_content = self.get_html(status_code, status_data)
 
             return file_content
 
@@ -341,13 +311,9 @@ class MyWebServer(socketserver.BaseRequestHandler):
         body = self.get_body(status_code, url)
 
         response = self.build_response(header, body)
-        print("Response:", response)
 
         return response
 
-
-    #TODO: close connection if you don't want to keep reading requests
-    #TODO: store a dictionary of all paths if it exists in the directory
 
 if __name__ == "__main__":
     HOST, PORT = "localhost", 8080
