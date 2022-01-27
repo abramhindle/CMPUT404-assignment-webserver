@@ -5,6 +5,7 @@ import os
 from datetime import datetime
 import re
 import sys
+from urllib import request
 
 import requests
 
@@ -49,39 +50,15 @@ class MyWebServer(socketserver.BaseRequestHandler):
         # parse the request
         method, url = self.parse_request(received.decode('utf-8'))
 
-        response = None
-        try:
 
-            # Handle GET request
-            if method == 'GET':
-                print('Handling GET request...')
-                success, content_type, data = self.handle_GET(url)
+        response = self.send_response(method, url)
 
-                if success:
-                    response = self.do_GET(200, content_type, data)
-                
-                else:
-                    print('Failed to GET body.')
-                    raise Exception
-            else:
-                # TODO: send response for other methods ()
-                print('Method not supported.')
-                pass
-            
-        except Exception as e:
-            print('[ERROR]', e)
-            self.handle_error()
-            
-        finally:
-            
-            # refactored_response = self.build_response(method, url)
+        if response:
+            self.request.sendall(bytearray(f'{response}', 'utf-8'))
 
-            if response:
-                self.request.sendall(bytearray(f'{response}', 'utf-8'))
-                # print("Response:", response)
+        print("Finished processing request.\n", '='*50)
 
-            print("Finished processing request.\n", '='*50)
-
+    
     
     def parse_request(self, req):
         '''
@@ -115,9 +92,6 @@ class MyWebServer(socketserver.BaseRequestHandler):
                 file_content = self.read_file_from_dir(paths[url])
                 content_type = self.get_content_type(paths[url])
 
-                print('Content-Type:', content_type)
-                print('File Content:', file_content)
-
                 if file_content and content_type:
                     return (1, content_type, file_content)
 
@@ -128,7 +102,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
         '''
             Returns the content type of the filepath
         '''
-        if filepath.endswith('.html'):
+        if filepath.endswith('.html') or filepath.endswith('/'):
             return 'text/html'
         elif filepath.endswith('.css'):
             return 'text/css'
@@ -232,58 +206,41 @@ class MyWebServer(socketserver.BaseRequestHandler):
         self.request.sendall(bytearray(response, 'utf-8'))
         sys.exit()
 
-    
-    def build_response(self, method, requested_url):
-        statuses = self.get_statuses()
-        paths = self.get_paths()
-        corrected_url = None
+    ####################################################################################
 
+    def get_status_code(self, method, requested_url):
+        '''
+            Returns the status code for the request
+        '''
+        
         # Handle GET request and get the correct status code 
         if method == 'GET':
-            status_code = 200
-            # if url exists in paths, serve the file
-            if not requested_url.endswith('/'):
-                corrected_url = self.url_exists(requested_url + '/')
-                if corrected_url:
-                    status_code = 301 
-                else:
-                    status_code = 404           
+            
+            # check if the url exists in the path
+            if self.url_exists(requested_url):
+                status_code = 200
+
+                # if the url does not end with '/ and it is an html page, redirect it to the correct url
+                if not requested_url.endswith('/') and not (requested_url.endswith('.html') or requested_url.endswith('.css')):
+                    status_code = 301
+            # if it does not exist in the path, return Not Found
+            else:
+                status_code = 404
 
         # Send 405 response otherwise 
         else:
             status_code = 405
+        
+        print("Status Code:", status_code)
 
-        status_data = statuses[status_code]
-        # Build the header
-        header = self.build_header(status_code, requested_url)
-
-
-        body = ''
-        # Build the body 
-        if status_code == 200:
-            # read the file from the directory
-            for url in paths.keys():
-                if corrected_url == url:
-                    body = self.read_file_from_dir(paths[url])
-
-        else:
-            if status_code == 301:
-                body = self.get_html(status_data, corrected_url)
-            else:
-                body = self.get_html(status_data)
-
-        # Append content length to header
-        content_length = str(len(body))
-        header += f'Content-Length: {content_length}\r\n\r\n'
-
-        # Append the body to the header 
-        response = header + body
-
-        print('Response:', response)
-
-        return response
+        return status_code
+    
     
     def get_statuses(self):
+        '''
+            Returns a dictionary of status codes and their corresponding messages
+
+        '''
         status_dict = {
             200: {
                 'message': 'OK',
@@ -299,37 +256,36 @@ class MyWebServer(socketserver.BaseRequestHandler):
         }
         return status_dict
 
-    def get_html(self, status_data, new_url=None):
+    def get_html(self, code, status_data, new_url=None):
 
-        code = status_data.keys()[0]
+        html_data = status_data[code]
 
         anchor_elem = ''
         if new_url:
             anchor_elem = f'<a href="{new_url}">here</a>.'
             
-        html_page = f'''
-        <!DOCTYPE html>
-        <html>
-        <head>
-        <title>{code} {status_data['message']}</title>
-        <meta http-equiv="Content-Type"
-        content="text/html;charset=utf-8"/>
-        </head>
-        <body>
-            <h1>{code} {status_data['message']}</h1>
-            {status_data['description']}
-            {anchor_elem}
-        </body>
-        </html> '''
+        html_page = f'''<!DOCTYPE html>
+                    <html>
+                    <head>
+                    <title>{code} {html_data['message']}</title>
+                    <meta http-equiv="Content-Type"
+                    content="text/html;charset=utf-8"/>
+                    </head>
+                    <body>
+                        <h1>{code} {html_data['message']}</h1>
+                        {html_data['description']}
+                        {anchor_elem}
+                    </body>
+                    </html>
+                    '''
 
         return html_page
     
     def build_header(self, status_code, url):
-        header = f'''
-        HTTP/1.1 {status_code} {self.get_statuses()[status_code]['message']}\r\n
-        Date: {self.get_date()}\r\n
-        Content-Type: {self.get_content_type(url)}\r\n
-        '''
+        status = f'HTTP/1.1 {status_code} {self.get_statuses()[status_code]["message"]}\r\n'
+        date = 'Date: ' + self.get_date() + '\r\n'
+        content_type = 'Content-Type: ' + self.get_content_type(url) + '\r\n'
+        header = status + date + content_type
 
         return header
     
@@ -337,10 +293,57 @@ class MyWebServer(socketserver.BaseRequestHandler):
         '''
             Checks if the url exists in the paths dictionary
         '''
+
         return url in self.get_paths().keys()
 
-    def send_response(self):
-        return 
+    def get_body(self, status_code, requested_url):
+        
+
+        # if code is 200, read the file 
+        if status_code == 200:
+            paths = self.get_paths()
+
+            for url in paths.keys():
+                if requested_url == url:
+                    file_content = self.read_file_from_dir(paths[url])
+                    return file_content
+
+        # else, return the html page
+        else:
+            status_data = self.get_statuses()
+
+            if status_code == 301: 
+                new_url = requested_url + '/'
+                file_content = self.get_html(301, status_data, new_url)
+            elif status_code == 404:
+                file_content = self.get_html(404, status_data)
+
+            return file_content
+
+    def build_response(self, header, body):
+
+        content_length = f'Content-Length: {len(body)}\r\n'
+
+        header += content_length + '\r\n'
+        response = header + body
+
+        return response
+
+    def send_response(self, method, url):
+
+        # get the status code 
+        status_code = self.get_status_code(method, url)
+
+        # get the header 
+        header = self.build_header(status_code, url)
+
+        # get the body
+        body = self.get_body(status_code, url)
+
+        response = self.build_response(header, body)
+        print("Response:", response)
+
+        return response
 
 
     #TODO: close connection if you don't want to keep reading requests
