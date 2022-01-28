@@ -263,7 +263,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
 
         return html_page
     
-    def build_header(self, status_code, url):
+    def build_header(self, status_code, url, redirect_url=None):
         '''
             Builds the header of the response. Currently missing the Content-Length 
             and Location fields, which will be updated accordingly.
