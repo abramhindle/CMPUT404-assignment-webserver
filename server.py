@@ -1,12 +1,8 @@
 #  coding: utf-8 
-from base64 import urlsafe_b64encode
 import socketserver
 import os 
 from datetime import datetime
-import re
-import sys
 
-import requests
 
 # Copyright 2013 Abram Hindle, Eddie Antonio Santos
 # 
@@ -49,67 +45,26 @@ class MyWebServer(socketserver.BaseRequestHandler):
         # parse the request
         method, url = self.parse_request(received.decode('utf-8'))
 
-        response = None
-        try:
+        # Get a response 
+        response = self.send_response(method, url)
 
-            # Handle GET request
-            if method == 'GET':
-                print('Handling GET request...')
-                success, content_type, data = self.handle_GET(url)
+        if response:
+            self.request.sendall(bytearray(f'{response}', 'utf-8'))
 
-                if success:
-                    response = self.do_GET(200, content_type, data)
-                
-                else:
-                    print('Failed to GET body.')
-                    raise Exception
-            else:
-                # TODO: send response for other methods ()
-                print('Method not supported.')
-                pass
-            
-        except Exception as e:
-            print('[ERROR]', e)
-            self.handle_error()
-            
-        finally:
-            if response:
-                self.request.sendall(bytearray(f'{response}', 'utf-8'))
-                # print("Response:", response)
+        print("Finished processing request.\n", '='*50)
 
-            print("Finished processing request.\n", '='*50)
     
-    # def old_parse_request(self, req):
-    #     start, headers = req.split('\r\n', 1)
-    #     method, url, protocol = start.split(' ')
-
-    #     # Handle GET request
-    #     if method == 'GET':
-    #         try:
-    #             # Get home index page
-    #             #FIXME: test_get_root and test_get_indexhtml failing
-    #             if url == '/' or url == '/index.html':
-    #                 return 'text/html', self.read_file_from_dir('/index.html')
-
-    #             # Use regex to get any .css file 
-    #             css_regexpr = re.search('.\.css$', url)
-    #             if css_regexpr is not None:
-    #                 return 'text/css', self.read_file_from_dir(url)
-            
-    #         except Exception as e:
-    #             print('[ERROR]', e)
-    #             self.handle_error()
-
-    #     else:
-    #         self.handle_error()
     
     def parse_request(self, req):
         '''
-            Parses the request from the client and returns the method and url 
+            Parses the request from the client and returns the method and url
+
+            Args:
+                req (str): the request from the client 
 
             Returns:
-                method: the method of the request (GET, POST, etc.)
-                url: the url of the request to serve
+                method (str): the method of the request (GET, POST, etc.)
+                url (str): the url of the request to serve
         '''
 
         start, headers = req.split('\r\n', 1)
@@ -117,43 +72,23 @@ class MyWebServer(socketserver.BaseRequestHandler):
 
         return method, url
 
-    def handle_GET(self, req_url):
-        '''
-            Takes the URL from the request header and sets the content-type and body
-
-            Returns:
-                success:    True if the request was successful, False otherwise
-                content_type:   the content type of the response (text/html, text/css, etc.)
-                body:   the body of the response
-
-        '''
-        
-        paths = self.get_paths()
-
-        for url in paths.keys():
-            if req_url == url:
-                file_content = self.read_file_from_dir(paths[url])
-                content_type = self.get_content_type(paths[url])
-
-                print('Content-Type:', content_type)
-                print('File Content:', file_content)
-
-                if file_content and content_type:
-                    return (1, content_type, file_content)
-
-
-        return (0, None, None)
 
     def get_content_type(self, filepath):
         '''
             Returns the content type of the filepath
+
+            Args:
+                filepath (str): the filepath of the file
+
+            Returns:
+                content_type (str): the content type, e.g. text/html
         '''
-        if filepath.endswith('.html'):
+        if filepath.endswith('.html') or filepath.endswith('/'):
             return 'text/html'
         elif filepath.endswith('.css'):
             return 'text/css'
         else:
-            return None
+            return 'application/octet-stream'
 
 
         
@@ -207,9 +142,6 @@ class MyWebServer(socketserver.BaseRequestHandler):
                             if nested_entry.name == 'index.html':
                                 paths['/' + entry.name + '/'] = filepath
 
-        # for key, value in paths.items():
-        #     print(f'{key}: {value}')
-
         return paths
             
 
@@ -223,6 +155,9 @@ class MyWebServer(socketserver.BaseRequestHandler):
     def read_file_from_dir(self, filepath):
         '''
             Reads the files from the directory
+
+            Args:
+                filepath (str): the path of the file
         '''
 
         with open(filepath, 'r', encoding='utf-8') as f:
@@ -230,31 +165,155 @@ class MyWebServer(socketserver.BaseRequestHandler):
 
             return body
 
-    def do_GET(self, status_code, content_type, body):
+
+    def get_status_code(self, method, requested_url):
         '''
-            Returns the response to the client
+            Returns the status code for the request
+
+            Args:
+                method (str): the method of the request (GET, POST, etc.)
+        '''
+        
+        # Handle GET request and get the correct status code 
+        if method == 'GET':
+            
+            # check if the url exists in the path
+            if self.url_exists(requested_url):
+                status_code = 200
+
+                # if the url does not end with '/ and it is an html page, redirect it to the correct url
+                if not requested_url.endswith('/') and not (requested_url.endswith('.html') or requested_url.endswith('.css')):
+                    status_code = 301
+            # if it does not exist in the path, return Not Found
+            else:
+                status_code = 404
+
+        # Send 405 response otherwise 
+        else:
+            status_code = 405
+        
+        print("Status Code:", status_code)
+
+        return status_code
+    
+    
+    def get_statuses(self):
+        '''
+            Returns a dictionary of status codes and their corresponding messages
 
         '''
+        status_dict = {
+            200: {
+                'message': 'OK',
+                'description': 'The request has succeeded'
+                },
+            404: {
+                'message': 'Not Found',
+                'description': 'The requested resource could not be found.'
+                },
+            301: {
+                'message':'Moved Permanently',
+                'description': 'The requested resource has been moved permanently'},
+            405: {
+                'message': 'Method Not Allowed',
+                'description': 'The method specified in the Request-Line is not allowed for the resource identified by the Request-URI'
+            }
+        }
+        return status_dict
 
-        status = f'HTTP/1.1 {status_code} OK\r\n'
+    def get_html(self, code, status_data, new_url=None):
+
+        html_data = status_data[code]
+
+        anchor_elem = ''
+        if new_url:
+            anchor_elem = f'<a href="{new_url}">here</a>.'
+            
+        html_page = f'''<!DOCTYPE html>
+                    <html>
+                    <head>
+                    <title>{code} {html_data['message']}</title>
+                    <meta http-equiv="Content-Type"
+                    content="text/html;charset=utf-8"/>
+                    </head>
+                    <body>
+                        <h1>{code} {html_data['message']}</h1>
+                        {html_data['description']}
+                        {anchor_elem}
+                    </body>
+                    </html>
+                    '''
+
+        return html_page
+    
+    def build_header(self, status_code, url):
+        status = f'HTTP/1.1 {status_code} {self.get_statuses()[status_code]["message"]}\r\n'
         date = 'Date: ' + self.get_date() + '\r\n'
-        content_type = 'Content-Type: ' + content_type + '\r\n'
-        content_len = 'Content-Length: ' + str(len(body)) + '\r\n'     
+        content_type = 'Content-Type: ' + self.get_content_type(url) + '\r\n'
+        header = status + date + content_type
 
-        header = status + date + content_type + content_len + '\r\n'
+        return header
+    
+    def url_exists(self, url):
+        '''
+            Checks if the url exists in the paths dictionary
+        '''
+
+        return url in self.get_paths().keys()
+
+    def get_body(self, status_code, requested_url):
+        '''
+            Returns the body of the response
+
+
+        '''
         
-        
-        return header + body
 
+        # if code is 200, read the file 
+        if status_code == 200:
+            paths = self.get_paths()
 
-    def handle_error(self):
-        response = 'HTTP/1.1 404 Not Found\r\n\r\n'
-        self.request.sendall(bytearray(response, 'utf-8'))
-        sys.exit()
+            for url in paths.keys():
+                if requested_url == url:
+                    file_content = self.read_file_from_dir(paths[url])
+                    return file_content
 
+        # else, return the html page
+        else:
+            status_data = self.get_statuses()
 
-    #TODO: close connection if you don't want to keep reading requests
-    #TODO: store a dictionary of all paths if it exists in the directory
+            if status_code == 301: 
+                new_url = requested_url + '/'
+                file_content = self.get_html(301, status_data, new_url)
+            else:
+                file_content = self.get_html(status_code, status_data)
+
+            return file_content
+
+    def build_response(self, header, body):
+
+        content_length = f'Content-Length: {len(body)}\r\n'
+
+        header += content_length + '\r\n'
+        response = header + body
+
+        return response
+
+    def send_response(self, method, url):
+
+        # get the status code 
+        status_code = self.get_status_code(method, url)
+
+        # get the header 
+        header = self.build_header(status_code, url)
+
+        # get the body
+        body = self.get_body(status_code, url)
+
+        response = self.build_response(header, body)
+
+        return response
+
 
 if __name__ == "__main__":
     HOST, PORT = "localhost", 8080
