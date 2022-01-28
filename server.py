@@ -4,7 +4,7 @@ import os
 from datetime import datetime
 
 
-# Copyright 2013 Abram Hindle, Eddie Antonio Santos
+# Copyright 2022 Della Humanita
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -37,8 +37,6 @@ class MyWebServer(socketserver.BaseRequestHandler):
             Main function for handling a single request
 
         '''
-        print("Starting server connection...")
-
         # self.request is the TCP socket connected to the client
         received = self.request.recv(1024).strip()
 
@@ -51,9 +49,6 @@ class MyWebServer(socketserver.BaseRequestHandler):
         if response:
             self.request.sendall(bytearray(f'{response}', 'utf-8'))
 
-        print("Finished processing request.\n", '='*50)
-
-    
     
     def parse_request(self, req):
         '''
@@ -148,6 +143,9 @@ class MyWebServer(socketserver.BaseRequestHandler):
     def get_date(self):
         '''
             Returns the current date and time
+
+            Returns:
+                date (str): the current date and time
         '''
         return datetime.now().strftime('%a, %d %b %Y %H:%M:%S')
 
@@ -158,6 +156,9 @@ class MyWebServer(socketserver.BaseRequestHandler):
 
             Args:
                 filepath (str): the path of the file
+
+            Returns:
+                body (str): The file contents 
         '''
 
         with open(filepath, 'r', encoding='utf-8') as f:
@@ -172,6 +173,9 @@ class MyWebServer(socketserver.BaseRequestHandler):
 
             Args:
                 method (str): the method of the request (GET, POST, etc.)
+
+            Returns:
+                status_code (int): the status code of the request
         '''
         
         # Handle GET request and get the correct status code 
@@ -192,14 +196,16 @@ class MyWebServer(socketserver.BaseRequestHandler):
         else:
             status_code = 405
         
-        print("Status Code:", status_code)
 
         return status_code
     
     
     def get_statuses(self):
         '''
-            Returns a dictionary of status codes and their corresponding messages
+            Returns a dictionary of status codes
+
+            Returns:
+                status_dict (dict): Dictionary of status codes and their corresponding messages
 
         '''
         status_dict = {
@@ -222,6 +228,17 @@ class MyWebServer(socketserver.BaseRequestHandler):
         return status_dict
 
     def get_html(self, code, status_data, new_url=None):
+        '''
+            Creates an HTML page for the appropriate status code
+
+            Args:
+                code (int): the status code of the request
+                status_data (dict): the status code dictionary
+                new_url (str): the new URL to redirect to for a 301 status code
+
+            Returns:
+                html_page (str): the formatted HTML page 
+        '''
 
         html_data = status_data[code]
 
@@ -247,6 +264,17 @@ class MyWebServer(socketserver.BaseRequestHandler):
         return html_page
     
     def build_header(self, status_code, url):
+        '''
+            Builds the header of the response. Currently missing the Content-Length 
+            and Location fields, which will be updated accordingly.
+
+            Args:
+                status_code (int): the status code of the request
+                url (str): the url of the request
+
+            Returns:
+                header (str): the starter header of the response
+        '''
         status = f'HTTP/1.1 {status_code} {self.get_statuses()[status_code]["message"]}\r\n'
         date = 'Date: ' + self.get_date() + '\r\n'
         content_type = 'Content-Type: ' + self.get_content_type(url) + '\r\n'
@@ -257,6 +285,12 @@ class MyWebServer(socketserver.BaseRequestHandler):
     def url_exists(self, url):
         '''
             Checks if the url exists in the paths dictionary
+
+            Args:
+                url (str): the url of the request
+            
+            Returns:
+                True if the url exists in the paths dictionary, False otherwise
         '''
 
         return url in self.get_paths().keys()
@@ -265,7 +299,13 @@ class MyWebServer(socketserver.BaseRequestHandler):
         '''
             Returns the body of the response
 
-
+            Args:
+                status_code (int): the status code of the request
+                requested_url (str): the url of the request
+            
+            Returns:
+                body (str): The file contents if it is a 200 status code, otherwise an HTML page 
+                            for the appropriate status code
         '''
         
 
@@ -291,6 +331,16 @@ class MyWebServer(socketserver.BaseRequestHandler):
             return file_content
 
     def build_response(self, header, body):
+        '''
+            Appends the body to the header and adds CLRF to the end of the header
+
+            Args:
+                header (str): the header of the response
+                body (str): the body of the response
+
+            Returns:
+                response (str): the complete response 
+        '''
 
         content_length = f'Content-Length: {len(body)}\r\n'
 
@@ -300,6 +350,18 @@ class MyWebServer(socketserver.BaseRequestHandler):
         return response
 
     def send_response(self, method, url):
+        '''
+            Retrieves the appropriate status code to create the header and body and 
+            creates a response to the client.
+
+            Args:
+                method (str): the method of the request (GET, POST, etc.)
+                url (str): the url of the request
+
+            Returns:
+                response (str): the complete response to the client
+        '''
+
 
         # get the status code 
         status_code = self.get_status_code(method, url)
