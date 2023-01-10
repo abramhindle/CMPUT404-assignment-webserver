@@ -33,13 +33,16 @@ class MyWebServer(socketserver.BaseRequestHandler):
         self.data = self.request.recv(1024).strip()
         print ("Got a request of: %s\n" % self.data)
         self.request.sendall(bytearray("OK",'utf-8'))
-
+        
 if __name__ == "__main__":
     HOST, PORT = "localhost", 8080
 
     socketserver.TCPServer.allow_reuse_address = True
     # Create the server, binding to localhost on port 8080
     server = socketserver.TCPServer((HOST, PORT), MyWebServer)
+
+    # Print server running 
+    print('Server running on port %s' % PORT)
 
     # Activate the server; this will keep running until you
     # interrupt the program with Ctrl-C
