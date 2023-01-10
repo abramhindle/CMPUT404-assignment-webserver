@@ -2,6 +2,7 @@
 import dataclasses
 import enum
 import socketserver
+import urllib.parse
 
 # Copyright 2013 Abram Hindle, Eddie Antonio Santos
 # 
@@ -29,6 +30,7 @@ import socketserver
 # try: curl -v -X GET http://127.0.0.1:8080/
 from dataclasses import dataclass
 from http import HTTPStatus
+from pathlib import Path
 from typing import Dict, Optional
 
 
@@ -75,9 +77,27 @@ class MyWebServer(socketserver.BaseRequestHandler):
         self.set_parsed_req()
         print(f"request: {self.parsed_req}")
         if self.parsed_req.method != Method.GET:
-            self.request.sendall(self.METHOD_NOT_ALLOWED_RESP.serialize())
+            resp = self.METHOD_NOT_ALLOWED_RESP
         else:
-            self.parsed_req.target
+            www = Path(__file__).parent / "www"
+            if self.parsed_req.target != "/" and self.parsed_req.target.endswith("/"):
+                resp = Response(301, {"Location": self.parsed_req.target.lstrip("/")})
+            else:
+                resource_path = (www / f".{self.parsed_req.target}").resolve()
+                if resource_path.is_dir():
+                    resource_path = resource_path / "index.html"
+                # not found + hacky way to resist path traversal attack
+                if not resource_path.exists() or not resource_path.as_posix().startswith(www.as_posix()):
+                    resp = Response(404)
+                else:
+                    suffix = resource_path.suffix.strip(".").lower()
+                    mime_type = f"text/{suffix}"
+                    body = resource_path.read_bytes()
+                    resp = Response(200, {"Content-Type": f"{mime_type}; charset=utf-8"}, body)
+        print(f"response formulated: {resp}")
+        self.request.sendall(resp.serialize())
+
+
 
     def set_parsed_req(self):
         meta, *body = self.data.split(b"\r\n\r\n")
@@ -89,6 +109,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
             #                 skip colon and whitesepace V
             headers[raw_header[:colon_idx]] = raw_header[colon_idx + 2:]
         method, target, version = startline.split(" ")
+        target = urllib.parse.unquote(target)
         self.parsed_req = Request(method=Method(method), target=target, version=version, headers=headers, body=body)
 
 
