@@ -45,11 +45,11 @@
    - [ ] Must use 301 to correct paths such as http://127.0.0.1:8080/deep to http://127.0.0.1:8080/deep/ (path ending)
 
 ** Restrictions
-   - [ ] Use Python3
+   - [x] Use Python3
    - [ ] Must run on Ubuntu (Use the undergrad lab machines, for example the ones in CSC 2-29 or install an Ubuntu VM to check this)
    - [ ] License your webserver properly (use an OSI approved license)
      - Put your name or some identifier (not your student number) on it!
-   - [ ] You cannot use a Web Server library
+   - [x] You cannot use a Web Server library
    - [ ] Screenshots must be named deep.png and root.png in the root of the repository
 
 ** Recommendations
