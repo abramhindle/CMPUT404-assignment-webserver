@@ -72,33 +72,35 @@ class Response:
 
 
 class MyWebServer(socketserver.BaseRequestHandler):
-    METHOD_NOT_ALLOWED_RESP = Response(405)
     def handle(self):
         self.data = self.request.recv(1024).strip()
         self.set_parsed_req()
         print(f"request: {self.parsed_req}")
+        self.set_resp()
+        print(f"response formulated: {self.resp}")
+        self.request.sendall(self.resp.serialize())
+
+    def set_resp(self):
         if self.parsed_req.method != Method.GET:
-            resp = self.METHOD_NOT_ALLOWED_RESP
+            self.resp = Response(405)
+            return
+
+        www = Path(__file__).parent / "www"
+        resource_path = (www / f".{self.parsed_req.target}").resolve()
+        if resource_path.is_dir():
+            if not self.parsed_req.target.endswith("/"):
+                self.resp = Response(301, {"Location": self.parsed_req.target + "/"})
+                return
+
+            resource_path = resource_path / "index.html"
+        # not found + hacky way to resist path traversal attack
+        if not resource_path.exists() or not resource_path.as_posix().startswith(www.as_posix()):
+            self.resp = Response(404)
         else:
-            www = Path(__file__).parent / "www"
-            if self.parsed_req.target != "/" and self.parsed_req.target.endswith("/"):
-                resp = Response(301, {"Location": self.parsed_req.target.rstrip("/")})
-            else:
-                resource_path = (www / f".{self.parsed_req.target}").resolve()
-                if resource_path.is_dir():
-                    resource_path = resource_path / "index.html"
-                # not found + hacky way to resist path traversal attack
-                if not resource_path.exists() or not resource_path.as_posix().startswith(www.as_posix()):
-                    resp = Response(404)
-                else:
-                    suffix = resource_path.suffix.strip(".").lower()
-                    mime_type = f"text/{suffix}"
-                    body = resource_path.read_bytes()
-                    resp = Response(200, {"Content-Type": f"{mime_type}; charset=utf-8"}, body)
-        print(f"response formulated: {resp}")
-        self.request.sendall(resp.serialize())
-
-
+            suffix = resource_path.suffix.strip(".").lower()
+            mime_type = f"text/{suffix}"
+            body = resource_path.read_bytes()
+            self.resp = Response(200, {"Content-Type": f"{mime_type}; charset=utf-8"}, body)
 
     def set_parsed_req(self):
         meta, *body = self.data.split(b"\r\n\r\n")
