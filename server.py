@@ -50,10 +50,22 @@ if __name__ == "__main__":
     IP, _ = server.server_address
     print('Server running on port %s' % PORT)
 
-    # Client connects to the server 
-    c = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    c.connect((IP,PORT))
+    # Client connects to the server (socket)
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((IP,PORT))
     print('Server and client connected.')
+
+    try:
+        f = open('./www/index.html','rb')
+        r = f.read() 
+        f.close() 
+
+        header = 'HTTP/1.1 200 OK\nContent-Type: text/css\n\n'
+    except Exception as e:
+        header = 'HTTP/1.1 404 Not Found\n\n'
+        r = '<html><body>404 Not Found. Sorry.</body></html>'.encode('utf-8')
+    server.request(header.encode('utf-8')+r)
+
 
     # Activate the server; this will keep running until you
     # interrupt the program with Ctrl-C
