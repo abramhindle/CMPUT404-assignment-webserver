@@ -38,6 +38,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
         self.data = self.request.recv(1024).strip() # attempt to receive data 
         print ("Got a request of: %s\n" % self.data)
         self.request.sendall(bytearray("OK",'utf-8'))
+
         
 if __name__ == "__main__":
     import socket
@@ -48,6 +49,11 @@ if __name__ == "__main__":
     server = socketserver.TCPServer((HOST, PORT), MyWebServer)
     IP, _ = server.server_address
     print('Server running on port %s' % PORT)
+
+    # Client connects to the server 
+    c = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    c.connect((IP,PORT))
+    print('Server and client connected.')
 
     # Activate the server; this will keep running until you
     # interrupt the program with Ctrl-C
