@@ -1,7 +1,5 @@
 #  coding: utf-8 
 import socketserver
-import os 
-import mimetypes
 
 # Copyright 2013 Abram Hindle, Eddie Antonio Santos
 # 
@@ -33,39 +31,20 @@ class MyWebServer(socketserver.BaseRequestHandler):
     
     def handle(self):
         """
-        Processing incoming requests from client side
+        Processing incoming requests from client
         """
-        self.data = self.request.recv(1024).strip() # attempt to receive data 
-        print ("Got a request of: %s\n" % self.data)
-        self.request.sendall(bytearray("OK",'utf-8'))
+        self.data = self.request.recv(1024).strip().decode() # attempt to receive data 
+        print("Got a request of: \n%s\n" % self.data)
+        self.request.sendall(bytearray("Yes. Connection made.",'utf-8'))
 
         
 if __name__ == "__main__":
-    import socket
     HOST, PORT = "localhost", 8080
 
     socketserver.TCPServer.allow_reuse_address = True
     # Create the server, binding to localhost on port 8080
     server = socketserver.TCPServer((HOST, PORT), MyWebServer)
-    IP, _ = server.server_address
-    print('Server running on port %s' % PORT)
-
-    # Client connects to the server (socket)
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((IP,PORT))
-    print('Server and client connected.')
-
-    try:
-        f = open('./www/index.html','rb')
-        r = f.read() 
-        f.close() 
-
-        header = 'HTTP/1.1 200 OK\nContent-Type: text/css\n\n'
-    except Exception as e:
-        header = 'HTTP/1.1 404 Not Found\n\n'
-        r = '<html><body>404 Not Found. Sorry.</body></html>'.encode('utf-8')
-    server.request(header.encode('utf-8')+r)
-
+    print('Server running on port %s\n' % PORT)
 
     # Activate the server; this will keep running until you
     # interrupt the program with Ctrl-C
