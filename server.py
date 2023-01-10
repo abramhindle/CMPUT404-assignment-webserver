@@ -66,6 +66,7 @@ class Response:
         return b"\r\n".join([
             f"{self.version} {self.status} {HTTPStatus(self.status).phrase}".encode(),
             *[f"{key}: {value}".encode() for key, value in self.headers.items()],
+            b"\r\n",
             b"" if self.body is None else self.body
         ])
 
@@ -81,7 +82,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
         else:
             www = Path(__file__).parent / "www"
             if self.parsed_req.target != "/" and self.parsed_req.target.endswith("/"):
-                resp = Response(301, {"Location": self.parsed_req.target.lstrip("/")})
+                resp = Response(301, {"Location": self.parsed_req.target.rstrip("/")})
             else:
                 resource_path = (www / f".{self.parsed_req.target}").resolve()
                 if resource_path.is_dir():
