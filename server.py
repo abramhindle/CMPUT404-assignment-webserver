@@ -30,16 +30,37 @@ import socketserver
 class MyWebServer(socketserver.BaseRequestHandler):
     
     def handle(self):
-        self.data = self.request.recv(1024).strip()
-        print ("Got a request of: %s\n" % self.data)
+        """
+        Processing incoming requests from client
+        """
+        self.data = self.request.recv(1024).strip().decode()
+        print("Got a request of: \n%s\n" % self.data)
         self.request.sendall(bytearray("OK",'utf-8'))
 
+        try:
+            path = self.data.split(' ')[1]
+
+            if path == '/':
+                path = '/index.html'
+
+            f = open('www' + path)
+            contents = f.read()
+            f.close() 
+
+            r = 'HTTP/1.1 200 OK\n\n' + contents 
+        except FileNotFoundError: 
+            print('HTTP/1.1 404 NOT FOUND\n\nI do not know what you were trying to do but it does not exist.')
+        else: 
+            self.request.sendall(r.encode('utf-8'))
+
+        
 if __name__ == "__main__":
     HOST, PORT = "localhost", 8080
 
     socketserver.TCPServer.allow_reuse_address = True
     # Create the server, binding to localhost on port 8080
     server = socketserver.TCPServer((HOST, PORT), MyWebServer)
+    print('Server running on port %s\n' % PORT)
 
     # Activate the server; this will keep running until you
     # interrupt the program with Ctrl-C
