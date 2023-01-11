@@ -34,8 +34,6 @@ class MyWebServer(socketserver.BaseRequestHandler):
         Processing incoming requests from client
         """
         self.data = self.request.recv(1024).strip().decode()
-        print("Got a request of: \n%s\n" % self.data)
-        self.request.sendall(bytearray("OK",'utf-8'))
 
         try:
             path = self.data.split(' ')[1]
