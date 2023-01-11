@@ -33,9 +33,25 @@ class MyWebServer(socketserver.BaseRequestHandler):
         """
         Processing incoming requests from client
         """
-        self.data = self.request.recv(1024).strip().decode() # attempt to receive data 
+        self.data = self.request.recv(1024).strip().decode()
         print("Got a request of: \n%s\n" % self.data)
-        self.request.sendall(bytearray("Yes. Connection made.",'utf-8'))
+        self.request.sendall(bytearray("OK",'utf-8'))
+
+        try:
+            path = self.data.split(' ')[1]
+
+            if path == '/':
+                path = '/index.html'
+
+            f = open('www' + path)
+            contents = f.read()
+            f.close() 
+
+            r = 'HTTP/1.1 200 OK\n\n' + contents 
+        except FileNotFoundError: 
+            print('HTTP/1.1 404 NOT FOUND\n\nI do not know what you were trying to do but it does not exist.')
+        else: 
+            self.request.sendall(r.encode('utf-8'))
 
         
 if __name__ == "__main__":
