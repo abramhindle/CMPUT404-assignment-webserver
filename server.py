@@ -45,10 +45,10 @@ class MyWebServer(socketserver.BaseRequestHandler):
             contents = f.read()
             f.close() 
 
-            if path.find('.css'):
+            if path.endswith('.css'):
                 r = 'HTTP/1.1 200 OK\nContent-Type: text/css\n\n' + contents
-            else: 
-                r = 'HTTP/1.1 200 OK\n\n' + contents 
+            if path.endswith('.html'):
+                r = 'HTTP/1.1 200 OK\nContent-Type: text/html\n\n' + contents
         except FileNotFoundError: 
             # currently is showing up even if the page shows...
             r = 'HTTP/1.1 404 NOT FOUND\n\nI do not know what you were trying to show, but it does not exist.'
