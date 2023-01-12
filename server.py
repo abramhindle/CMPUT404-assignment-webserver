@@ -33,6 +33,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
     def handle(self):
         """
         Processes incoming requests from client
+        Only processes GET requests
         """
         try:
             self.data = self.request.recv(1024).strip().decode()
@@ -47,6 +48,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
                 header = 'HTTP/1.1 200 OK\n'
 
             root = 'www'
+            r = ''
 
             if path == '/':
                 path = '/index.html'
@@ -61,7 +63,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
 
                 if path.endswith('.css'):
                     r = header + 'Content-Type: text/css\n\n' + contents
-                if path.endswith('.html'):
+                elif path.endswith('.html'):
                     r = header + 'Content-Type: text/html\n\n' + contents
         except IsADirectoryError:
             if os.path.isfile(root + path + 'index.html'):
@@ -74,8 +76,8 @@ class MyWebServer(socketserver.BaseRequestHandler):
         except FileNotFoundError: 
             r = 'HTTP/1.1 404 NOT FOUND\n\nI do not know what you were trying to show, but it does not exist.'
         finally: 
-            self.request.sendall(r.encode('utf-8')) # send the HTML page with CSS styling
-            self.request.close() # close the client connection
+            self.request.sendall(r.encode('utf-8'))
+            self.request.close()
 
         
 if __name__ == "__main__":
@@ -83,9 +85,9 @@ if __name__ == "__main__":
 
     socketserver.TCPServer.allow_reuse_address = True
     # Create the server, binding to localhost on port 8080
-    server = socketserver.TCPServer((HOST, PORT), MyWebServer)
-    print('Webserver running on port %s' % PORT)
+    with socketserver.TCPServer((HOST, PORT), MyWebServer) as server:
+        print('Running on port %s' % PORT)
 
-    # Activate the server; this will keep running until you
-    # interrupt the program with Ctrl-C
-    server.serve_forever()
+        # Activate the server; this will keep running until you
+        # interrupt the program with Ctrl-C
+        server.serve_forever()
