@@ -31,27 +31,30 @@ class MyWebServer(socketserver.BaseRequestHandler):
     
     def handle(self):
         """
-        Processing incoming requests from client
+        Processes incoming requests from client
         """
-        self.data = self.request.recv(1024).strip().decode()
-        print("Got a request of: \n%s\n" % self.data)
-        self.request.sendall(bytearray("OK",'utf-8'))
-
         try:
+            self.data = self.request.recv(1024).strip().decode()
             path = self.data.split(' ')[1]
 
+            r = 'HTTP/1.1 404 NOT FOUND\n\nI do not know what you were trying to show, but it does not exist.'
             if path == '/':
                 path = '/index.html'
-
+                
             f = open('www' + path)
             contents = f.read()
             f.close() 
 
-            r = 'HTTP/1.1 200 OK\n\n' + contents 
+            if path.find('.css'):
+                r = 'HTTP/1.1 200 OK\nContent-Type: text/css\n\n' + contents
+            else: 
+                r = 'HTTP/1.1 200 OK\n\n' + contents 
         except FileNotFoundError: 
-            print('HTTP/1.1 404 NOT FOUND\n\nI do not know what you were trying to do but it does not exist.')
-        else: 
-            self.request.sendall(r.encode('utf-8'))
+            # currently is showing up even if the page shows...
+            r = 'HTTP/1.1 404 NOT FOUND\n\nI do not know what you were trying to show, but it does not exist.'
+        finally: 
+            self.request.sendall(r.encode('utf-8')) # send the HTML page with CSS styling
+            self.request.close() # close the client connection
 
         
 if __name__ == "__main__":
@@ -60,7 +63,7 @@ if __name__ == "__main__":
     socketserver.TCPServer.allow_reuse_address = True
     # Create the server, binding to localhost on port 8080
     server = socketserver.TCPServer((HOST, PORT), MyWebServer)
-    print('Server running on port %s\n' % PORT)
+    print('Webserver running on port %s' % PORT)
 
     # Activate the server; this will keep running until you
     # interrupt the program with Ctrl-C
