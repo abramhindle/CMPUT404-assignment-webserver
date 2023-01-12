@@ -1,5 +1,6 @@
 #  coding: utf-8 
 import socketserver
+import os
 
 # Copyright 2013 Abram Hindle, Eddie Antonio Santos
 # 
@@ -45,31 +46,31 @@ class MyWebServer(socketserver.BaseRequestHandler):
             else: 
                 header = 'HTTP/1.1 200 OK\n'
 
-            r = 'HTTP/1.1 404 NOT FOUND\n\nI do not know what you were trying to show, but it does not exist.'
-            
+            root = 'www'
+
             if path == '/':
                 path = '/index.html'
-            elif not path.endswith('/') and not path.endswith('.css') and not path.endswith('.html'):
-                print(path)
-                path = path + '/' 
             
-            root = 'www'
-            f = open(root + path)
-            contents = f.read()
-            f.close() 
+            if not path.endswith('/') and not path.endswith('.css') and not path.endswith('.html'):
+                header = 'HTTP/1.1 301 Moved Permanently'
+                r = header + '\nLocation: ' + path + '/'
+            else:            
+                f = open(root + path)
+                contents = f.read()
+                f.close() 
 
-            if path.endswith('.css'):
-                r = header + 'Content-Type: text/css\n\n' + contents
-            if path.endswith('.html'):
-                r = header + 'Content-Type: text/html\n\n' + contents
+                if path.endswith('.css'):
+                    r = header + 'Content-Type: text/css\n\n' + contents
+                if path.endswith('.html'):
+                    r = header + 'Content-Type: text/html\n\n' + contents
         except IsADirectoryError:
-            header = 'HTTP/1.1 301 Moved Permanently'
-
-            f = open(root + path + 'index.html')
-            contents = f.read()
-            f.close()
-            
-            r = header + '\nLocation: ' + path
+            if os.path.isfile(root + path + 'index.html'):
+                f = open(root + path + 'index.html')
+                contents = f.read()
+                f.close()
+                r = header + 'Content-Type: text/html\n\n' + contents
+            else:
+                r = 'HTTP/1.1 404 NOT FOUND\n\nI do not know what you were trying to show, but it does not exist.'
         except FileNotFoundError: 
             r = 'HTTP/1.1 404 NOT FOUND\n\nI do not know what you were trying to show, but it does not exist.'
         finally: 
