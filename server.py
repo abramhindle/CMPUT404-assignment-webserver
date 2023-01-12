@@ -1,5 +1,6 @@
 #  coding: utf-8 
 import socketserver
+import os
 
 # Copyright 2013 Abram Hindle, Eddie Antonio Santos
 # 
@@ -35,20 +36,36 @@ class MyWebServer(socketserver.BaseRequestHandler):
         """
         try:
             self.data = self.request.recv(1024).strip().decode()
-            path = self.data.split(' ')[1]
+            print('Got a request: \n' + self.data)
+            if self.data != ' ' or self.data != '':
+                s_data = self.data.split(' ')
+                method, path = s_data[0], s_data[1]
+            
+            if method != 'GET':
+                header = 'HTTP/1.1 405 Method Not Allowed\n'
+            else: 
+                header = 'HTTP/1.1 200 OK\n'
 
             r = 'HTTP/1.1 404 NOT FOUND\n\nI do not know what you were trying to show, but it does not exist.'
             if path == '/':
                 path = '/index.html'
-                
-            f = open('www' + path)
+            
+            root = 'www'
+            f = open(root + path)
             contents = f.read()
             f.close() 
 
             if path.endswith('.css'):
-                r = 'HTTP/1.1 200 OK\nContent-Type: text/css\n\n' + contents
+                r = header + 'Content-Type: text/css\n\n' + contents
             if path.endswith('.html'):
-                r = 'HTTP/1.1 200 OK\nContent-Type: text/html\n\n' + contents
+                r = header + 'Content-Type: text/html\n\n' + contents
+        except IsADirectoryError:
+            root = 'www'
+            f = open(root + path + '/index.html')
+            contents = f.read()
+            f.close()
+            
+            r = header + 'Content-Type: text/html\n\n' + contents
         except FileNotFoundError: 
             # currently is showing up even if the page shows...
             r = 'HTTP/1.1 404 NOT FOUND\n\nI do not know what you were trying to show, but it does not exist.'
