@@ -1,6 +1,5 @@
 #  coding: utf-8 
 import socketserver
-import os
 
 # Copyright 2013 Abram Hindle, Eddie Antonio Santos
 # 
@@ -47,8 +46,12 @@ class MyWebServer(socketserver.BaseRequestHandler):
                 header = 'HTTP/1.1 200 OK\n'
 
             r = 'HTTP/1.1 404 NOT FOUND\n\nI do not know what you were trying to show, but it does not exist.'
+            
             if path == '/':
                 path = '/index.html'
+            elif not path.endswith('/') and not path.endswith('.css') and not path.endswith('.html'):
+                print(path)
+                path = path + '/' 
             
             root = 'www'
             f = open(root + path)
@@ -60,14 +63,14 @@ class MyWebServer(socketserver.BaseRequestHandler):
             if path.endswith('.html'):
                 r = header + 'Content-Type: text/html\n\n' + contents
         except IsADirectoryError:
-            root = 'www'
-            f = open(root + path + '/index.html')
+            header = 'HTTP/1.1 301 Moved Permanently'
+
+            f = open(root + path + 'index.html')
             contents = f.read()
             f.close()
             
-            r = header + 'Content-Type: text/html\n\n' + contents
+            r = header + '\nLocation: ' + path
         except FileNotFoundError: 
-            # currently is showing up even if the page shows...
             r = 'HTTP/1.1 404 NOT FOUND\n\nI do not know what you were trying to show, but it does not exist.'
         finally: 
             self.request.sendall(r.encode('utf-8')) # send the HTML page with CSS styling
