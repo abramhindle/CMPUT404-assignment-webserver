@@ -1,5 +1,6 @@
 #  coding: utf-8
 import socketserver
+import os
 
 # Copyright 2013 Abram Hindle, Eddie Antonio Santos
 #
@@ -33,6 +34,10 @@ class MyWebServer(socketserver.BaseRequestHandler):
         'INDEX_PAGE': 'index.html',
         'NOT_FOUND': '404'
     }
+    SPACE = '\r\n'
+    END = '\r\n\r\n'
+    NOT_OKAY = -1
+    OKAY = 1
 
     def handle(self):
         self.data = self.request.recv(1024).strip()
@@ -41,16 +46,24 @@ class MyWebServer(socketserver.BaseRequestHandler):
         # Now that we have the response. We need to parse it. parse_request
         # already decodes the data.
         request_is_good = self.parse_request(self.data)
-        print(self.extension)
-        if request_is_good == -1:   # handling any POST/PUT/DELETE request
-            print("Something")
+
+        if request_is_good == self.NOT_OKAY:   # handling any POST/PUT/DELETE request
             self.request.sendall(bytearray(
-                f"HTTP/1.1 405 METHOD NOT ALLOWED/r/nContent-Type: 'text/html'/r/nContent-Length: {len(f)}; encoding=utf-8/r/n/r/nThis works!", 'utf-8'))
+                f"HTTP/1.1 405 METHOD NOT ALLOWED{self.SPACE}Content-Type: 'text/html'{self.SPACE}Content-Length: 42{self.SPACE} encoding=utf-8{self.END}405 METHOD NOT ALLOWED", 'utf-8'))
             return
-        elif self.extension == 'index.html':  # directed to index.html
-            self.request.sendall(bytearray(
-                f"HTTP/1.1 200 OK\r\ncontent-Type: text/html; encoding=utf-8\r\n\r\nThis works!", 'utf-8'))
-            return
+
+        elif self.extension == 'index.html':  # directed to default index.html
+            self.serve_default_index()
+
+        elif self.extension == 'deep_index.html':
+            self.serve_deep_index()
+
+        elif self.extension == 'base.css':
+            self.serve_default_css()
+
+        elif self.extension == 'hardcode_index.html':
+            self.serve_hardcode_index()
+
         elif self.extension == '404':
             self.request.sendall(bytearray(
                 f"HTTP/1.1 404 NOT FOUND\r\ncontent-Type: text/html; encoding=utf-8\r\n\r\nThis works!", 'utf-8'))
@@ -62,20 +75,92 @@ class MyWebServer(socketserver.BaseRequestHandler):
             return -1
 
         self.extension = ''
-        # There is no extension after base url
-        if self.data[4:6] == '/ ':
-            self.extension = None
-        elif self.data[4:15] == '/index.html':  # requested for index.html
+        # If root or directly requesting index.html
+        if self.parse_request_default_html():
             self.extension = 'index.html'
+        elif self.parse_request_deep_html():
+            self.extension = 'deep_index.html'
+        elif self.parse_request_default_css():
+            self.extension = 'base.css'
+        elif self.parse_request_hardcode_html():
+            self.extension = 'hardcode_index.html'
+
+        # elif self.data[]
+
         else:  # request is okay but cannot find the extension requested.
             self.extension = '404'
         return 1
+
+    """
+    Parse the request path methods. ---------------------------------
+    """
+
+    def parse_request_default_html(self):
+        if self.data[4:6] == '/ ' \
+                or self.data[4:17] == '/index.html/ ' \
+                or self.data[4:16] == '/index.html ':
+            return True
+        return False
+
+    def parse_request_default_css(self):
+        end = self.data.find("HTTP")
+        if self.data[4:end] == '/base.css ' \
+                or self.data[4:end] == '/base.css/ ':
+            return True
+        return False
+
+    def parse_request_deep_html(self):
+        end = self.data.find("HTTP")
+        if self.data[4:end] == '/deep ' \
+                or self.data[4:end] == '/deep/ ' \
+                or self.data[4:end] == '/deep/index.html '\
+                or self.data[4:end] == '/deep/index.html/ ':
+            return True
+        return False
+
+    def parse_request_hardcode_html(self):
+        end = self.data.find("HTTP")
+        end = end - 1
+        if self.data[4:end] == '/hardcode'\
+                or self.data[4:end] == '/hardcode/'\
+                or self.data[4:end] == '/hardcode/index.html'\
+                or self.data[4:end] == '/hardcode/index.html/':
+            return True
+        return False
+
+    """
+    Serve the page methods. ----------------------------------------
+    """
+
+    def serve_default_css(self):
+        with open(os.getcwd() + "/www/base.css", 'rb') as file:
+            f_holder = file.read()
+        self.request.sendall(bytearray(
+            f"HTTP/1.1 200 OK{self.SPACE}Content-Type: text/css{self.SPACE}{self.END}{f_holder}", 'utf-8'))
+
+    def serve_deep_index(self):
+        with open(os.getcwd() + "/www/deep/index.html", 'rb') as file:
+            f_holder = file.read()
+        self.request.sendall(bytearray(
+            f"HTTP/1.1 200 OK{self.SPACE}Content-Type: text/html{self.SPACE}{self.END}{f_holder}", 'utf-8'))
+
+    def serve_default_index(self):
+        with open(os.getcwd() + "/www/index.html", 'rb') as file:
+            f_holder = file.read()
+        self.request.sendall(bytearray(
+            f"HTTP/1.1 200 OK{self.SPACE}Content-Type: text/html{self.SPACE}{self.END}{f_holder}", 'utf-8'))
+
+    def serve_hardcode_index(self):
+        with open(os.getcwd() + "/www/hardcode/index.html", 'rb') as file:
+            f_holder = file.read()
+        self.request.sendall(bytearray(
+            f"HTTP/1.1 200 OK{self.SPACE}Content-Type: text/html{self.SPACE}{self.END}{f_holder}", 'utf-8'))
 
         '''
         Content-Type': 'text/html; encoding=utf8'
         self.request.sendall(bytearray(f"HTTP/1.1 200 OK\r\n"))
 
-        
+
 
         if self.data[:3] = "GET"
         f = open(index.html)
@@ -95,7 +180,3 @@ if __name__ == "__main__":
     # Activate the server; this will keep running until you
     # interrupt the program with Ctrl-C
     server.serve_forever()
-
-
-file index.html
-f = open("www/"+file)
