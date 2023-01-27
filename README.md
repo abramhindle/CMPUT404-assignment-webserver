@@ -35,8 +35,8 @@ in the public domain.
 # Credit or References
 
 - BogoToBogo
-- https://www.bogotobogo.com/python/python_network_programming_socketserver_framework_for_network_servers.php
-- Network Programming III - SocketServer
+https://www.bogotobogo.com/python/python_network_programming_socketserver_framework_for_network_servers.php
+Network Programming III - SocketServer
 
 - Tech With Tim
 - https://www.youtube.com/@TechWithTim
