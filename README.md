@@ -36,19 +36,19 @@ in the public domain.
 
 - BogoToBogo<br />
 https://www.bogotobogo.com/python/python_network_programming_socketserver_framework_for_network_servers.php<br />
-Network Programming III - SocketServer
+Network Programming III - SocketServer<br />
 
-- Tech With Tim
-- https://www.youtube.com/@TechWithTim
-- Python Socket Programming Tutorial
-- https://youtu.be/3QiPPX-KeSc
-- Youtube
+- Tech With Tim<br />
+https://www.youtube.com/@TechWithTim<br />
+Python Socket Programming Tutorial<br />
+https://youtu.be/3QiPPX-KeSc<br />
+Youtube<br />
 
-- jbx
-- https://stackoverflow.com/users/340088/jbx
-- https://stackoverflow.com/a/53070496
-- Stackoverflow
+- jbx<br />
+https://stackoverflow.com/users/340088/jbx<br />
+https://stackoverflow.com/a/53070496<br />
+Stackoverflow<br />
 
-- PyMOTW
-- http://pymotw.com/2/SocketServer/
-- SocketServer – Creating network servers
+- PyMOTW<br />
+http://pymotw.com/2/SocketServer/<br />
+SocketServer – Creating network servers<br />
