@@ -54,19 +54,32 @@ class MyWebServer(socketserver.BaseRequestHandler):
 
         elif self.extension == 'index.html':  # directed to default index.html
             self.serve_default_index()
+            return
 
         elif self.extension == 'deep_index.html':
             self.serve_deep_index()
+            return
 
         elif self.extension == 'base.css':
             self.serve_default_css()
+            return
 
         elif self.extension == 'hardcode_index.html':
             self.serve_hardcode_index()
+            return
+
+        elif self.extension == 'hardcode_deep_index.html':
+            self.serve_hardcode_deep_index()
+            return
+
+        elif self.parse_redirect() == 1:
+            self.serve_redirect(1)
+            return
 
         elif self.extension == '404':
             self.request.sendall(bytearray(
                 f"HTTP/1.1 404 NOT FOUND\r\ncontent-Type: text/html; encoding=utf-8\r\n\r\nThis works!", 'utf-8'))
+            return
 
     def parse_request(self, data):
         self.data = data.decode('utf-8')
@@ -84,6 +97,8 @@ class MyWebServer(socketserver.BaseRequestHandler):
             self.extension = 'base.css'
         elif self.parse_request_hardcode_html():
             self.extension = 'hardcode_index.html'
+        elif self.parse_request_hardcode_deep_html():
+            self.extension = 'hardcode_deep_index.html'
 
         # elif self.data[]
 
@@ -102,17 +117,9 @@ class MyWebServer(socketserver.BaseRequestHandler):
             return True
         return False
 
-    def parse_request_default_css(self):
-        end = self.data.find("HTTP")
-        if self.data[4:end] == '/base.css ' \
-                or self.data[4:end] == '/base.css/ ':
-            return True
-        return False
-
     def parse_request_deep_html(self):
         end = self.data.find("HTTP")
-        if self.data[4:end] == '/deep ' \
-                or self.data[4:end] == '/deep/ ' \
+        if self.data[4:end] == '/deep/ ' \
                 or self.data[4:end] == '/deep/index.html '\
                 or self.data[4:end] == '/deep/index.html/ ':
             return True
@@ -121,10 +128,31 @@ class MyWebServer(socketserver.BaseRequestHandler):
     def parse_request_hardcode_html(self):
         end = self.data.find("HTTP")
         end = end - 1
-        if self.data[4:end] == '/hardcode'\
-                or self.data[4:end] == '/hardcode/'\
+        if self.data[4:end] == '/hardcode/'\
                 or self.data[4:end] == '/hardcode/index.html'\
                 or self.data[4:end] == '/hardcode/index.html/':
+            return True
+        return False
+
+    def parse_request_hardcode_deep_html(self):
+        end = self.data.find("HTTP")
+        end = end - 1
+        if self.data[4:end] == '/hardcode/deep/'\
+            or self.data[4:end] == '/hardcode/deep/index.html'\
+                or self.data[4:end] == '/hardcode/deep/index.html/':
+            return True
+        return False
+
+    def parse_redirect(self):
+        end = self.data.find("HTTP")
+        end = end - 1
+        if self.data[4:end] == '/deep':
+            return 1
+
+    def parse_request_default_css(self):
+        end = self.data.find("HTTP")
+        if self.data[4:end] == '/base.css ' \
+                or self.data[4:end] == '/base.css/ ':
             return True
         return False
 
@@ -133,41 +161,44 @@ class MyWebServer(socketserver.BaseRequestHandler):
     """
 
     def serve_default_css(self):
-        with open(os.getcwd() + "/www/base.css", 'rb') as file:
+        with open(os.getcwd() + "/www/base.css", 'r') as file:
             f_holder = file.read()
+            f_holder = f_holder.replace('\n', '')
         self.request.sendall(bytearray(
             f"HTTP/1.1 200 OK{self.SPACE}Content-Type: text/css{self.SPACE}{self.END}{f_holder}", 'utf-8'))
 
-    def serve_deep_index(self):
-        with open(os.getcwd() + "/www/deep/index.html", 'rb') as file:
+    def serve_redirect(self, value):
+        if value == 1:
+            self.request.sendall(bytearray(
+                f"HTTP/1.1 301 MOVED PERMANENTLY{self.SPACE}Location: http://127.0.0.1:8080/deep/{self.SPACE}{self.END}", 'utf-8'))
+
+    def serve_hardcode_deep_index(self):
+        with open(os.getcwd() + "/www/hardcode/deep/index.html", 'r') as file:
             f_holder = file.read()
+            f_holder = f_holder.replace('\n', '')
+        self.request.sendall(bytearray(
+            f"HTTP/1.1 200 OK{self.SPACE}Content-Type: text/html{self.SPACE}{self.END}{f_holder}", 'utf-8'))
+
+    def serve_deep_index(self):
+        with open(os.getcwd() + "/www/deep/index.html", 'r') as file:
+            f_holder = file.read()
+            f_holder = f_holder.replace('\n', '')
         self.request.sendall(bytearray(
             f"HTTP/1.1 200 OK{self.SPACE}Content-Type: text/html{self.SPACE}{self.END}{f_holder}", 'utf-8'))
 
     def serve_default_index(self):
-        with open(os.getcwd() + "/www/index.html", 'rb') as file:
+        with open(os.getcwd() + "/www/index.html", 'r') as file:
             f_holder = file.read()
+            f_holder = f_holder.replace('\n', '')
         self.request.sendall(bytearray(
             f"HTTP/1.1 200 OK{self.SPACE}Content-Type: text/html{self.SPACE}{self.END}{f_holder}", 'utf-8'))
 
     def serve_hardcode_index(self):
-        with open(os.getcwd() + "/www/hardcode/index.html", 'rb') as file:
+        with open(os.getcwd() + "/www/hardcode/index.html", 'r') as file:
             f_holder = file.read()
+            f_holder = f_holder.replace('\n', '')
         self.request.sendall(bytearray(
             f"HTTP/1.1 200 OK{self.SPACE}Content-Type: text/html{self.SPACE}{self.END}{f_holder}", 'utf-8'))
-
-        '''
-        Content-Type': 'text/html; encoding=utf8'
-        self.request.sendall(bytearray(f"HTTP/1.1 200 OK\r\n"))
-
-
-
-        if self.data[:3] = "GET"
-        f = open(index.html)
-        f1 = f.read
-        f.close
-        self.request.sendall(bytearray(f"HTTP/1.1 200 OK/r/nContent/r/n/r/n{f1}", 'utf-8'))
-        self.request.sendall(bytearray("HTTP", 'utf-8'))'''
 
 
 if __name__ == "__main__":
