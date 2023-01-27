@@ -4,6 +4,8 @@ import os
 
 # Copyright 2013 Abram Hindle, Eddie Antonio Santos
 #
+# Updated by Ferdous Adit, 1538839.
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -18,7 +20,7 @@ import os
 #
 #
 # Furthermore it is derived from the Python documentation examples thus
-# some of the code is Copyright © 2001-2013 Python Software
+# some of the code is Copyright © 2001-2023 Python Software
 # Foundation; All Rights Reserved
 #
 # http://docs.python.org/2/library/socketserver.html
