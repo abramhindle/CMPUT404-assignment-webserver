@@ -2,7 +2,7 @@
 import socketserver
 import os
 
-# Copyright 2013 Abram Hindle, Eddie Antonio Santos
+# Copyright 2023 Abram Hindle, Eddie Antonio Santos
 #
 # Updated by Ferdous Adit, 1538839.
 #
