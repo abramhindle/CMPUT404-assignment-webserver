@@ -45,6 +45,7 @@ class Method(enum.Enum):
     PUT = "PUT"
     TRACE = "TRACE"
 
+print(f"\nPath(__file__).parent={Path(__file__).parent}")
 
 @dataclass
 class Request:
