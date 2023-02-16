@@ -2,6 +2,7 @@
 import dataclasses
 import enum
 import socketserver
+import sys
 import urllib.parse
 
 # Copyright 2013 Abram Hindle, Eddie Antonio Santos, Mattwmaster58
@@ -45,7 +46,7 @@ class Method(enum.Enum):
     PUT = "PUT"
     TRACE = "TRACE"
 
-print(f"\nPath(__file__).parent={Path(__file__).parent}")
+print(f"\n(__file__)={__file__}")
 
 @dataclass
 class Request:
@@ -86,7 +87,8 @@ class MyWebServer(socketserver.BaseRequestHandler):
             self.resp = Response(405)
             return
 
-        www = Path(__file__).parent / "www"
+        # www = Path(__file__).parent / "www"
+        www = Path(__file__).absolute().parent / "www"
         resource_path = (www / f".{self.parsed_req.target}").resolve()
         if resource_path.is_dir():
             if not self.parsed_req.target.endswith("/"):
