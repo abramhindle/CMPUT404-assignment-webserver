@@ -26,16 +26,61 @@ import socketserver
 
 # try: curl -v -X GET http://127.0.0.1:8080/
 
+FORMAT = 'utf-8'
+
 
 class MyWebServer(socketserver.BaseRequestHandler):
     
     def handle(self):
         self.data = self.request.recv(1024).strip()
         print ("Got a request of: %s\n" % self.data)
-        self.request.sendall(bytearray("OK",'utf-8'))
+
+        print(f"DATA --> {self.data}\n\n\n")
+        requestInput = self.data.decode(FORMAT).split('\n')
+        print(f"REQUEST INPUT --> {requestInput}\n\n\n")
+        requestLine = requestInput[0].split()
+        print(f"REQUEST LINE --> {requestLine}\n\n\n")
+        method = requestLine[0]
+        path = requestLine[1]
+        print(f"METHOD --> {method}\n\n\n")
+        print(f"PATH --> {path}\n\n\n")
+
+
+        if method == "GET":
+            #maybe make more general get request method in the future?
+            if path == "/base.css":
+                self.serveCSS()
+            else:
+                print("PATH != /base.css")
+                
+        else:
+            print("METHOD != GET")
+            
+
+
+        #parse_lines = self.data.decode
+        self.request.sendall(bytearray("HTTP/1.1 200 OK\r\n\r\nOK", FORMAT))
+
+    def serveCSS(self):
+        print("Serve css function")
+
+        responseHeader = "HTTP/1.1 200 OK\r\n"
+
+        content = ""
+        try:
+            with open("./www/base.css", "r") as cssFile:
+                content = cssFile.read()
+        except FileNotFoundError:
+            responseHeader = "HTTP/1.1 404 Not Found\r\n"
+            content = "EMPTY"
+
+        self.request.sendall(responseHeader.encode(FORMAT) + content.encode(FORMAT))
+
 
 if __name__ == "__main__":
     HOST, PORT = "localhost", 8080
+
+    print("--- Server Running ---")
 
     socketserver.TCPServer.allow_reuse_address = True
     # Create the server, binding to localhost on port 8080

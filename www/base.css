@@ -2,3 +2,14 @@ h1 {
     color:orange;
     text-align:center;
 }
+
+button {
+    background-color: rgb(77, 155, 157);
+    color: beige;
+    border: rgb(0, 0, 0);
+    height: 30px;
+    width: 70x;
+    border-radius: 2px;
+    cursor: pointer;
+
+}
