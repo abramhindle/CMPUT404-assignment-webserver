@@ -24,3 +24,9 @@ examples thus some of the code is Copyright © 2001-2013 Python
 Software Foundation; All Rights Reserved under the PSF license (GPL
 compatible) http://docs.python.org/2/library/socketserver.html
 
+
+https://www.freecodecamp.org/news/python-bytes-to-string-how-to-convert-a-bytestring/
+https://stackoverflow.com/questions/43580/how-to-find-the-mime-type-of-a-file-in-python
+https://docs.python.org/3/library/mimetypes.html
+
+
