@@ -33,18 +33,18 @@ import mimetypes
 class MyWebServer(socketserver.BaseRequestHandler):
     
     def handle(self):
-        redirect = False
+        redirect = False # 301 flag
         self.data = self.request.recv(1024).strip()
         print ("\n\nGot a request of: %s" % self.data)
-        # parse request
+        # parse request and convert to string
         method = self.data.split()[0].decode('utf-8')
         file_name = self.data.split()[1].decode('utf-8')
-        file_path = os.path.abspath("www" + file_name)
+        file_path = os.path.abspath("www" + file_name) # get the full path of file
         if os.path.exists(file_path) and os.path.isdir(file_path):
-            if file_name[-1] != '/':
+            if file_name[-1] != '/': # if path is a directory and does not end with a slash
                 file_name += '/'
                 redirect = True
-            else:
+            else: # if path is a directory that ends with a slash, add index.html
                 file_name += 'index.html'
 
         print("File name: " + file_name)
@@ -53,12 +53,11 @@ class MyWebServer(socketserver.BaseRequestHandler):
         if method == "GET":
             content = self.read_file(file_name)
             if content != None:
-                if redirect:
+                print("200 OK")
+                self.send_response(200, "OK", content, mimetypes.guess_type(os.path.abspath("www" + file_name)))
+            elif redirect:
                     print("301 Moved Permanently: "+ file_name)
-                    self.send_response(301, "Moved Permanently", None, None, ("http://"+HOST+":"+str(PORT)+file_name))
-                else:
-                    print("200 OK")
-                    self.send_response(200, "OK", content, mimetypes.guess_type(os.path.abspath("www" + file_name)))
+                    self.send_response(301, "Moved Permanently", None, None, ("http://127.0.0.1" + ":" + str(PORT)+file_name))
             else:
                 self.send_response(404, "File not found")
         else:
@@ -66,12 +65,15 @@ class MyWebServer(socketserver.BaseRequestHandler):
     
     def read_file(self, file_name):
         file_path = os.path.abspath("www" + file_name)
-        if os.path.exists(file_path):
+        if os.path.exists(file_path) and os.path.isfile(file_path):
                 print("File exists")
-                f = open(file_path, 'rb')
+                f = open(file_path, 'rb') # read file in binary mode
                 content = f.read()
                 f.close()
                 return content  
+        elif os.path.exists(file_path) and os.path.isdir(file_path):
+            print("File is a directory")
+            return None
         else:
             print("File does not exist")
             return None
