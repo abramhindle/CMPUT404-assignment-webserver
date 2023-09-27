@@ -50,6 +50,7 @@ import os
         b'127.0.0.1:8080', b'User-Agent:', b'Python-urllib/3.8', b'Connection:', b'close']
 '''
 BASE_PATH = 'www'
+NEWLINE = '\n'
 
 class MyWebServer(socketserver.BaseRequestHandler):
     
@@ -57,6 +58,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
         #print("Path", BASE_PATH)
        #print("Norm", os.path.normpath(BASE_PATH))
         self.data = self.request.recv(1024).strip()
+        print(self.data)
         #print ("Got a request of: %s\n" % self.data)
         #print("DATA", self.data)
         sections = self.data.split()
@@ -64,49 +66,61 @@ class MyWebServer(socketserver.BaseRequestHandler):
         #print('DECODED\n', decoded)
         self.decoded = self.decoded.split()
         #print("1", decoded[1])
-       
+        #print(self.decoded)
         if self.decoded[0] == 'GET':
-            self.try_get()
+            output = self.try_get()
         else:
             self.error_405()
-
-        self.request.sendall(bytearray("OK",'utf-8'))
+        sending = self.decoded[2]+' '+ str(self.http_status_code)+NEWLINE+'Content-Type: '+self.mime_type+NEWLINE+NEWLINE+self.content
+        #print(sending)
+        self.request.sendall(bytearray(sending, 'utf-8'))
+        #self.request.sendall(bytearray("OK",'utf-8'))
 
     def try_get(self):
-        print("The Path is", self.decoded[1])
+        #print("The Path is", self.decoded[1]+NEWLINE)
         path = self.decoded[1]
-        
+        self.mime_type = ''
         if path == '/deep':
-            path = BASE_PATH+'/deep/'
+            path = BASE_PATH+path+'/'
             #print("checking1..", os.path.isfile(path))
-            self.http_status_code = 200
+            self.decoded[1] = '/deep/'
+            #self.send_header('Location', self.decoded[1])
+            self.http_status_code = 301 #moved permanenly!
+            #Redirected! :) or 300?/307/8?
         elif path[-1] == '/':
             path = BASE_PATH+path+'index.html'
+            self.mime_type = 'text/html'
             #print("checking2..", os.path.isfile(path))
             self.http_status_code = 200
+            # Found! :)
         elif path[-4:] == '.css':
             path = BASE_PATH+path
             #print("checking3..", os.path.isfile(path))
             self.mime_type = 'text/css'
             self.http_status_code = 200
+            #Found! :)
         elif path[-5:] == '.html':
             path = BASE_PATH+path
             #print("checking4..", os.path.isfile(path))
             self.mime_type = 'text/html'
             self.http_status_code = 200
+        print("The Path is", self.decoded[1]+NEWLINE)
         try:
+            #print('trying')
             file = open(path, "r")
-            content = file.read()
+            self.content = file.read()
+            #print(self.content)
+            #print('success!')
         except Exception as e:
-            
+            print("Path", path, "Has failed for some reason.")
             self.http_status_code = 404
+            self.content = ''
             print("error 404 not found")
-        
-        #pass
+        return path
 
     def error_405(self):
+        self.content = ''
         self.http_status_code = 405
-        #self.result = self.decoded[2]+self.http_status_code+'\n'+self.decoded[3]+
         
 
 if __name__ == "__main__":
