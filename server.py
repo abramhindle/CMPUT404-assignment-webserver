@@ -58,7 +58,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
         #print("Path", BASE_PATH)
        #print("Norm", os.path.normpath(BASE_PATH))
         self.data = self.request.recv(1024).strip()
-        print(self.data)
+        #print(self.data)
         #print ("Got a request of: %s\n" % self.data)
         #print("DATA", self.data)
         sections = self.data.split()
@@ -70,6 +70,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
         if self.decoded[0] == 'GET':
             output = self.try_get()
         else:
+            print(self.decoded[0])
             self.error_405()
         sending = self.decoded[2]+' '+ str(self.http_status_code)+NEWLINE+'Content-Type: '+self.mime_type+NEWLINE+NEWLINE+self.content
         #print(sending)
@@ -120,6 +121,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
 
     def error_405(self):
         self.content = ''
+        self.mime_type = ''
         self.http_status_code = 405
         
 
