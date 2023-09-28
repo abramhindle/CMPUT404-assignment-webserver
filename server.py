@@ -1,5 +1,6 @@
 #  coding: utf-8 
 import socketserver
+import os
 
 # Copyright 2013 Abram Hindle, Eddie Antonio Santos
 # 
@@ -28,11 +29,53 @@ import socketserver
 
 
 class MyWebServer(socketserver.BaseRequestHandler):
+
+    OKSTATUS = "HTTP/1.1 200 OK\r\n"
+    MOVEDSTATUS = "HTTP/1.1 301 Moved Permanently\r\n"
+    NOTFOUNDSTATUS = "HTTP/1.1 404 Not Found\r\n"
+    NOTALLOWEDSTATUS = "HTTP/1.1 405 Method Not Allowed\r\n\r\n"
     
+    def splitRequest(self, requestStr):
+        # get the request method
+        splitRequest = str(requestStr).split("b'")
+        requestSplitBySpace = splitRequest[1].split(" ")
+        print(requestSplitBySpace)
+        #requestMethod = requestSplitBySpace[0]
+        return requestSplitBySpace
+
+    def readFileContents(self, path):
+        
+        file = open("./www" + path, "r")
+        while True:
+            bytesRead = file.read()
+            print(bytesRead)
+            if not bytesRead:
+                break
+        return bytearray(bytesRead, 'utf-8')
+            
+
     def handle(self):
         self.data = self.request.recv(1024).strip()
         print ("Got a request of: %s\n" % self.data)
-        self.request.sendall(bytearray("OK",'utf-8'))
+        
+        # get the request method
+        
+        splitRequest = self.splitRequest(self.data)
+        requestMethod = splitRequest[0]
+        print(splitRequest)
+
+
+        if requestMethod == "GET":
+            # print(requestMethod)
+
+            # get the file name
+            filename = str(splitRequest[1])
+            fileContents = self.readFileContents(filename)
+            print(os.path.getsize("./www"+filename))
+            
+            self.request.sendall(bytearray(self.OKSTATUS + "Content-Type: text/css\r\n\r\n" + str(fileContents),'utf-8'))
+
+
 
 if __name__ == "__main__":
     HOST, PORT = "localhost", 8080
