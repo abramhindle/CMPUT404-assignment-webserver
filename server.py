@@ -51,6 +51,7 @@ import os
 '''
 BASE_PATH = 'www'
 NEWLINE = '\n'
+CLOSE = 'close'
 
 class MyWebServer(socketserver.BaseRequestHandler):
     
@@ -68,61 +69,125 @@ class MyWebServer(socketserver.BaseRequestHandler):
         #print("1", decoded[1])
         #print(self.decoded)
         if self.decoded[0] == 'GET':
-            output = self.try_get()
+           self.try_get()
         else:
-            print(self.decoded[0])
+            #print(self.decoded[0])
             self.error_405()
-        sending = self.decoded[2]+' '+ str(self.http_status_code)+NEWLINE+'Content-Type: '+self.mime_type+NEWLINE+NEWLINE+self.content
+        #self.sending = self.decoded[2]+' '+ str(self.http_status_code)+NEWLINE+'Content-Type: '+self.content_type+NEWLINE+NEWLINE+self.content
         #print(sending)
-        self.request.sendall(bytearray(sending, 'utf-8'))
+        self.request.sendall(bytearray(self.sending, 'utf-8'))
         #self.request.sendall(bytearray("OK",'utf-8'))
 
     def try_get(self):
         #print("The Path is", self.decoded[1]+NEWLINE)
-        path = self.decoded[1]
+        self.path = self.decoded[1]
+        #print("THE PATH", self.path)
         self.mime_type = ''
-        if path == '/deep':
-            path = BASE_PATH+path+'/'
+        if self.path == '/deep':
+            self.path = BASE_PATH+self.path+'/'
             #print("checking1..", os.path.isfile(path))
             self.decoded[1] = '/deep/'
             #self.send_header('Location', self.decoded[1])
             self.http_status_code = 301 #moved permanenly!
             #Redirected! :) or 300?/307/8?
-        elif path[-1] == '/':
-            path = BASE_PATH+path+'index.html'
+        elif self.path[-1] == '/':
+            self.path = BASE_PATH+self.path+'index.html'
             self.mime_type = 'text/html'
             #print("checking2..", os.path.isfile(path))
             self.http_status_code = 200
             # Found! :)
-        elif path[-4:] == '.css':
-            path = BASE_PATH+path
+        elif self.path[-4:] == '.css':
+            self.path = BASE_PATH+self.path
             #print("checking3..", os.path.isfile(path))
             self.mime_type = 'text/css'
             self.http_status_code = 200
             #Found! :)
-        elif path[-5:] == '.html':
-            path = BASE_PATH+path
+        elif self.path[-5:] == '.html':
+            self.path = BASE_PATH+self.path
             #print("checking4..", os.path.isfile(path))
             self.mime_type = 'text/html'
             self.http_status_code = 200
-        print("The Path is", self.decoded[1]+NEWLINE)
+        if self.path[-6:] == '/group':
+            #Permission denied
+            self.http_status_code = 404
+            self.mime_type = ''
+            self.content = ''
+            self.error_404()
+            return
+        elif self.path == '/favicon.ico':
+            self.mime_type = ''
+            self.content = ''
+            self.http_status_code = 200
+            self.pass_200()
+            return
+        # print("The Path is", self.decoded[1]+NEWLINE)
         try:
-            #print('trying')
-            file = open(path, "r")
+            #print('trying', self.path)
+            file = open(self.path, "r")
             self.content = file.read()
             #print(self.content)
             #print('success!')
-        except Exception as e:
-            print("Path", path, "Has failed for some reason.")
-            self.http_status_code = 404
+            self.pass_200()
+        except FileNotFoundError as e:
+            #print("Path", self.path, "Has failed for some reason.")
+            # try:
+            #     print("Inside second try", self.path)
+            #     self.path = self.path+'/'
+            #     file.open(self.path, "r")
+            #     self.content = file.read()
+            #     print('success!')
+            #     self.redirect_301()
+
+            # except:
+            #print("error 404 not found")
+            self.error_404()
+        except IsADirectoryError as e:
+            #print("redirecting...")
             self.content = ''
-            print("error 404 not found")
-        return path
+            self.redirect_301()
+            
+                
+                
+        #return self.path
+    
+    def error_404(self):
+        self.http_status_code = 404
+        self.content = ''
+        self.content_type = 'text/html'
+        self.sending = self.decoded[2]+' '+ str(self.http_status_code)+NEWLINE+'Content-Type: '+self.content_type+NEWLINE+NEWLINE+self.content+NEWLINE+"Connection: "+CLOSE +NEWLINE
+        
+
+    def pass_200(self):
+        self.http_status_code = 200
+        if self.path[-4:] == '.css':
+            self.path = BASE_PATH+self.path
+            #print("checking3..", os.path.isfile(path))
+            self.content_type = 'text/css'
+            #Found! :)
+        elif self.path[-5:] == '.html':
+            self.path = BASE_PATH+self.path
+            #print("checking4..", os.path.isfile(path))
+            self.content_type = 'text/html'
+        else:
+            self.path = BASE_PATH+self.path
+            self.content_type = 'text.html'
+
+        self.sending = self.decoded[2]+' '+ str(self.http_status_code)+NEWLINE+'Content-Type: '+self.content_type+NEWLINE+NEWLINE+self.content+NEWLINE+"Connection: "+CLOSE +NEWLINE
+            
+
+    def redirect_301(self):
+        self.content_type = 'text/html'
+        self.http_status_code = 301
+        self.location = self.path
+        self.sending = self.decoded[2]+' '+ str(self.http_status_code)+NEWLINE+'Location'+self.location+NEWLINE+'Content-Type: '+self.content_type+NEWLINE+NEWLINE+self.content+NEWLINE+"Connection: "+CLOSE +NEWLINE
+
+
 
     def error_405(self):
         self.content = ''
-        self.mime_type = ''
+        self.content_type = 'text/html'
         self.http_status_code = 405
+        self.sending = self.decoded[2]+' '+ str(self.http_status_code)+NEWLINE+'Content-Type: '+self.content_type+NEWLINE+NEWLINE+self.content+NEWLINE+"Connection: "+CLOSE +NEWLINE
         
 
 if __name__ == "__main__":
