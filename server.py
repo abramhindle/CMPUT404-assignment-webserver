@@ -39,13 +39,19 @@ class MyWebServer(socketserver.BaseRequestHandler):
         # get the request method
         splitRequest = str(requestStr).split("b'")
         requestSplitBySpace = splitRequest[1].split(" ")
-        print(requestSplitBySpace)
+        # print(requestSplitBySpace)
         #requestMethod = requestSplitBySpace[0]
         return requestSplitBySpace
+    
+
+    def checkPath(self, path):
+        print(os.path.exists(path))
+        return os.path.exists(path)
+    
 
     def readFileContents(self, path):
         
-        file = open("./www" + path, "r")
+        file = open(path, "r")
         while True:
             bytesRead = file.read()
             print(bytesRead)
@@ -59,22 +65,37 @@ class MyWebServer(socketserver.BaseRequestHandler):
         print ("Got a request of: %s\n" % self.data)
         
         # get the request method
-        
         splitRequest = self.splitRequest(self.data)
         requestMethod = splitRequest[0]
         print(splitRequest)
 
-
+        # check for get request
         if requestMethod == "GET":
             # print(requestMethod)
 
+            
             # get the file name
             filename = str(splitRequest[1])
-            fileContents = self.readFileContents(filename)
-            print(os.path.getsize("./www"+filename))
-            
-            self.request.sendall(bytearray(self.OKSTATUS + "Content-Type: text/css\r\n\r\n" + str(fileContents),'utf-8'))
 
+            # check for a valid path
+            if (self.checkPath("./www" + filename)):
+                path = "./www" + filename
+
+                # if root directory then redirect to index.html
+                if (path.endswith("/") and self.checkPath(path + "index.html")):
+                    path += "index.html"
+                
+                if (path.endswith(".css")):
+                    contentType = "css"
+                elif (path.endswith(".html")):
+                    contentType = "html"
+                
+                fileContents = self.readFileContents(path)
+                # print(os.path.getsize("./www"+filename))
+            
+                self.request.sendall(bytearray(self.OKSTATUS + "Content-Type: text/"+contentType+"\r\n\r\n" + str(fileContents),'utf-8'))
+            else:
+                self.request.sendall(bytearray(self.NOTFOUNDSTATUS,'utf-8'))
 
 
 if __name__ == "__main__":
