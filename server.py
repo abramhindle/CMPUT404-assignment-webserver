@@ -66,6 +66,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
         self.decoded = self.data.decode()
         #print('DECODED\n', decoded)
         self.decoded = self.decoded.split()
+        self.path = BASE_PATH+self.decoded[1]
         #print("1", decoded[1])
         #print(self.decoded)
         if self.decoded[0] == 'GET':
@@ -80,33 +81,33 @@ class MyWebServer(socketserver.BaseRequestHandler):
 
     def try_get(self):
         #print("The Path is", self.decoded[1]+NEWLINE)
-        self.path = self.decoded[1]
+        
         #print("THE PATH", self.path)
-        self.mime_type = ''
+        
         if self.path == '/deep':
-            self.path = BASE_PATH+self.path+'/'
+            self.path = self.path+'/'
             #print("checking1..", os.path.isfile(path))
             self.decoded[1] = '/deep/'
             #self.send_header('Location', self.decoded[1])
             self.http_status_code = 301 #moved permanenly!
             #Redirected! :) or 300?/307/8?
         elif self.path[-1] == '/':
-            self.path = BASE_PATH+self.path+'index.html'
+            self.path = self.path+'index.html'
             self.mime_type = 'text/html'
+            self.content_type = 'text/html'
             #print("checking2..", os.path.isfile(path))
-            self.http_status_code = 200
             # Found! :)
         elif self.path[-4:] == '.css':
-            self.path = BASE_PATH+self.path
+            #self.path = BASE_PATH+self.path
             #print("checking3..", os.path.isfile(path))
             self.mime_type = 'text/css'
-            self.http_status_code = 200
+            self.content_type = 'text/css'
             #Found! :)
         elif self.path[-5:] == '.html':
-            self.path = BASE_PATH+self.path
+            #self.path = BASE_PATH+self.path
             #print("checking4..", os.path.isfile(path))
             self.mime_type = 'text/html'
-            self.http_status_code = 200
+            self.content_type = 'text/html'
         if self.path[-6:] == '/group':
             #Permission denied
             self.http_status_code = 404
@@ -158,19 +159,20 @@ class MyWebServer(socketserver.BaseRequestHandler):
         
 
     def pass_200(self):
+        #print("200", self.path)
         self.http_status_code = 200
-        if self.path[-4:] == '.css':
-            self.path = BASE_PATH+self.path
-            #print("checking3..", os.path.isfile(path))
-            self.content_type = 'text/css'
-            #Found! :)
-        elif self.path[-5:] == '.html':
-            self.path = BASE_PATH+self.path
-            #print("checking4..", os.path.isfile(path))
-            self.content_type = 'text/html'
-        else:
-            self.path = BASE_PATH+self.path
-            self.content_type = 'text.html'
+        # if self.path[-4:] == '.css':
+        #     #self.path = BASE_PATH+self.path
+        #     #print("checking3..", os.path.isfile(path))
+        #     self.content_type = 'text/css'
+        #     #Found! :)
+        # elif self.path[-5:] == '.html':
+        #     #self.path = BASE_PATH+self.path
+        #     #print("checking4..", os.path.isfile(path))
+        #     self.content_type = 'text/html'
+        # else:
+        #     #self.path = BASE_PATH+self.path
+        #     self.content_type = 'text.html'
 
         self.sending = self.decoded[2]+' '+ str(self.http_status_code)+NEWLINE+'Content-Type: '+self.content_type+NEWLINE+NEWLINE+self.content+NEWLINE+"Connection: "+CLOSE +NEWLINE
             
