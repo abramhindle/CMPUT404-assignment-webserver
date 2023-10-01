@@ -110,13 +110,18 @@ class MyWebServer(socketserver.BaseRequestHandler):
         self.path = BASE_PATH + self.path
 
         try:
-            
             file = open(self.path, "r")
             self.content = file.read()
             self.pass_200()
         except FileNotFoundError as e:
+            '''
+            File is not found / does not exist!
+            '''
             self.error_404()
         except IsADirectoryError as e:
+            '''
+            This is not an appropriate file
+            '''
             self.content = ''
             self.redirect_301()
             
