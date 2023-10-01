@@ -74,29 +74,31 @@ class MyWebServer(socketserver.BaseRequestHandler):
             self.request.close()
 
     def try_get(self):
+        '''
+        Update the paths according to user stories in requirements.org, then attempt to open the
+        files. Catch exceptions and handle/assign appropriate HTTP status codes accordingly.
+        '''
         
         if self.path == '/deep':
             self.path = self.path+'/'
             self.decoded[1] = '/deep/'
-            self.http_status_code = 301 #moved permanenly!
+            #moved permanenly!
             #Redirected! :) or 300?/307/8?
+
         elif self.path[-1] == '/':
             self.path = self.path+'index.html'
             self.content_mime_type = 'text/html'
-            # Found! :)
-
-        elif self.path[-4:] == '.css':
-            self.content_mime_type = 'text/css'
-            #Found! :)
-
-        elif self.path[-5:] == '.html':
-            self.content_mime_type = 'text/html'
+            # Fixed path! :)
 
         if '/etc/' in self.path:
-            #Permission denied
+            #Permission denied, these files should not be accessed.
+            # https://tldp.org/LDP/sag/html/etc-fs.html source used for understanding this directory.
             self.error_404()
             return
         
+        # The path "/favicon.ico" was giving me issues/errors when I ran the server without the tests,
+        # I implemented this simply to handle those errors.
+
         # elif self.path == '/favicon.ico':
         #     self.content_mime_type = 'text/plain'
         #     self.content = ''
@@ -104,10 +106,11 @@ class MyWebServer(socketserver.BaseRequestHandler):
         #     self.pass_200()
         #     return
         
+        #www + /path
         self.path = BASE_PATH + self.path
 
         try:
-            #self.date = WEEK[list(time.localtime())[6]-1] +','+ str(list(time.localtime())[2]) , MONTH[list(time.localtime())[1]-1] , str(list(time.localtime())[0]) , str(list(time.localtime())[3]) +':'+str(list(time.localtime())[4])+':'+str(list(time.localtime())[5])
+            
             file = open(self.path, "r")
             self.content = file.read()
             self.pass_200()
@@ -119,6 +122,11 @@ class MyWebServer(socketserver.BaseRequestHandler):
             
     
     def error_404(self):
+        '''
+        There was some issue opening the file, it could not be found.
+        Error 404 returned.
+        '''
+
         self.http_status_code = 404
         self.content = 'Error 404 Page Not Found'
         self.content_mime_type = 'text/html'
@@ -127,11 +135,24 @@ class MyWebServer(socketserver.BaseRequestHandler):
         
 
     def pass_200(self):
+        '''
+        There was no issue opening the file! 200 OK status code returned.
+        '''
+
         self.http_status_code = 200
+        if self.path[-4:] == '.css':
+            self.content_mime_type = 'text/css'
+            #Fixed path :)
+        else:
+            self.content_mime_type = 'text/html'
         self.sending = self.decoded[2]+' '+ str(self.http_status_code)+NEWLINE+'Content-Type: '+self.content_mime_type+NEWLINE+NEWLINE+self.content+NEWLINE#+"Connection: "+CLOSE +NEWLINE
             
 
     def redirect_301(self):
+        '''
+        Need to send the redirected path under the header - Location:
+        '''
+
         self.content_mime_type = 'text/html'
         self.http_status_code = 301
         self.location = self.path
@@ -139,6 +160,10 @@ class MyWebServer(socketserver.BaseRequestHandler):
 
 
     def error_405(self):
+        '''
+        The request is attempting to use PUT, POST, etc.
+        This server can only handle GET requests.
+        '''
         self.content = 'Unfortunately the server cannot handle this request.'
         self.content_type = 'text/html'
         self.http_status_code = 405
