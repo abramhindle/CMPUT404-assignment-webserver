@@ -49,17 +49,9 @@ class MyWebServer(socketserver.BaseRequestHandler):
         else:
             # Return 405 error for any method that you cannot handle
             self.request.sendall(bytearray("HTTP/1.1 405 Method Not Allowed\r\nContent-Type: text/html\r\n\r\n"+"<body><h1>405: Method Not Allowed</h1></body>",'utf-8'))
-        
-        #self.request.sendall(bytearray("OK",'utf-8'))
 
 
     def handleGet(self, path):
-        # TODO: remove
-        # Get pairs of header names and what they are set to
-        # headersList = list(self.plainData[3::])
-        # headers = dict(zip(headersList[::2], headersList[1::2]))
-        # print(headers)
-
         pathEnd = path.split("/")[-1] # Is the deepest path of the path a file?
         
         # Check if we need a 301 code to correct the path ending where no file is requested.
@@ -122,4 +114,3 @@ if __name__ == "__main__":
     # Activate the server; this will keep running until you
     # interrupt the program with Ctrl-C
     server.serve_forever()
-
