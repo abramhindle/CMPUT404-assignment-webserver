@@ -38,7 +38,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
         #self.data = None # TODO: test unreadable request
         if self.data == None:
             # Badly formatted request
-            self.request.sendall(bytearray("HTTP/1.1 400 Bad Request\r\nContent-Type: text/html\r\n\r\n"+"<body><h1>400: Bad Request</h1></body>",'utf-8'))
+            self.request.sendall(bytearray("HTTP/1.1 400 Bad Request\r\nContent-Type: text/html\r\n\r\n"+"<body><h1>400: Bad Request</h1></body>\r\n",'utf-8'))
 
         self.plainData = self.data.decode().split()
         method, path, protocol = self.plainData[0:3]
@@ -48,7 +48,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
             self.handleGet(path)
         else:
             # Return 405 error for any method that you cannot handle
-            self.request.sendall(bytearray("HTTP/1.1 405 Method Not Allowed\r\nContent-Type: text/html\r\n\r\n"+"<body><h1>405: Method Not Allowed</h1></body>",'utf-8'))
+            self.request.sendall(bytearray("HTTP/1.1 405 Method Not Allowed\r\nContent-Type: text/html\r\n\r\n"+"<body><h1>405: Method Not Allowed</h1></body>\r\n",'utf-8'))
 
 
     def handleGet(self, path):
@@ -69,7 +69,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
                 self.serveFiles(path, fullLocation)
             else:
                 # The directory itself does not exist
-                self.request.sendall(bytearray("HTTP/1.1 404 Not Found\r\nContent-Type: text/html\r\n\r\n"+"<body><h1>404: Not Found</h1></body>",'utf-8'))
+                self.request.sendall(bytearray("HTTP/1.1 404 Not Found\r\nContent-Type: text/html\r\n\r\n"+"<body><h1>404: Not Found</h1></body>\r\n",'utf-8'))
 
 
     def serveFiles(self, path, fullLocation):
@@ -81,10 +81,10 @@ class MyWebServer(socketserver.BaseRequestHandler):
 
                 # Send the proper file mime-types
                 fileType = path.split(".")
-                self.request.sendall(bytearray("HTTP/1.1 200 OK\r\nContent-Type: text/" + fileType[1]+"\r\n\r\n"+file_content,'utf-8'))
+                self.request.sendall(bytearray("HTTP/1.1 200 OK\r\nContent-Type: text/" + fileType[1]+"\r\n\r\n"+file_content+"\r\n",'utf-8'))
             except FileNotFoundError:
                 print("Error: the path is invalid / the file does not exist.")
-                self.request.sendall(bytearray("HTTP/1.1 404 Not Found\r\nContent-Type: text/html\r\n\r\n"+"<body><h1>404: Not Found</h1></body>",'utf-8'))
+                self.request.sendall(bytearray("HTTP/1.1 404 Not Found\r\nContent-Type: text/html\r\n\r\n"+"<body><h1>404: Not Found</h1></body>\r\n",'utf-8'))
             except:
                 print("Error: Unable to load the file.")
                 # 500 Internal Server Error
@@ -94,10 +94,10 @@ class MyWebServer(socketserver.BaseRequestHandler):
             try:
                 with open(fullLocation + "index.html", 'r') as file:
                     file_content = file.read() 
-                self.request.sendall(bytearray("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n"+file_content,'utf-8'))
+                self.request.sendall(bytearray("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n"+file_content+"\r\n",'utf-8'))
             except FileNotFoundError:
                 print("Error: the path is invalid / the file does not exist.")
-                self.request.sendall(bytearray("HTTP/1.1 404 Not Found\r\nContent-Type: text/html\r\n\r\n"+"<body><h1>404: Not Found</h1></body>",'utf-8'))
+                self.request.sendall(bytearray("HTTP/1.1 404 Not Found\r\nContent-Type: text/html\r\n\r\n"+"<body><h1>404: Not Found</h1></body>+\r\n",'utf-8'))
             except:
                 print("Error: Unable to load the file.")
                 # 500 Internal Server Error
